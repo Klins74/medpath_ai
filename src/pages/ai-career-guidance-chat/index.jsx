@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
 import Header from '../../components/ui/Header';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import WelcomeScreen from './components/WelcomeScreen';
-
+import ConfigurationStatus from '../../components/ui/ConfigurationStatus';
+import { getStreamingChatCompletion } from '../../services/openaiService';
+import { showError, showSuccess, showDevNotification } from '../../utils/notifications';
+import { pageTransition, stagger } from '../../utils/animations';
+import { getOpenAIConfigStatus } from '../../utils/openaiClient';
 
 const AICareerGuidanceChat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,9 +19,143 @@ const AICareerGuidanceChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [conversationTitle, setConversationTitle] = useState('Career Guidance Chat');
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState('');
+  const [streamingMessageId, setStreamingMessageId] = useState(null);
+  const [showConfigStatus, setShowConfigStatus] = useState(false);
+  const [configStatus, setConfigStatus] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Mock conversation data
+  // Check configuration status on mount
+  useEffect(() => {
+    const status = getOpenAIConfigStatus();
+    setConfigStatus(status);
+    
+    if (!status.isConfigured) {
+      setShowConfigStatus(true);
+    }
+  }, []);
+
+  // Generate conversation title based on first message
+  const generateConversationTitle = (message) => {
+    const words = message.split(' ').slice(0, 5);
+    return words.join(' ') + (words.length >= 5 ? '...' : '');
+  };
+
+  // Generate suggestions based on AI response
+  const generateSuggestions = (response) => {
+    const suggestions = [
+      "Tell me more about this",
+      "What are the next steps?",
+      "Are there any alternatives?",
+      "What resources do you recommend?"
+    ];
+    return suggestions.slice(0, 3);
+  };
+
+  // Handle file upload functionality
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) {
+      showError('No files selected');
+      return;
+    }
+
+    // Validate file types and sizes
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        showError(`File type ${file.type} is not supported. Please upload PDF, DOC, DOCX, or TXT files.`);
+        return;
+      }
+
+      if (file.size > maxSize) {
+        showError(`File ${file.name} is too large. Maximum size is 5MB.`);
+        return;
+      }
+    }
+
+    try {
+      // Process each file
+      for (const file of files) {
+        const fileContent = await readFileContent(file);
+        
+        // Add file upload message to chat
+        const fileMessage = {
+          id: Date.now() + Math.random(),
+          content: `📄 Uploaded: ${file.name}`,
+          isUser: true,
+          timestamp: new Date(),
+          isFileUpload: true,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size
+        };
+
+        setMessages(prev => [...prev, fileMessage]);
+
+        // Generate AI response based on file content
+        const analysisPrompt = `I've uploaded a document: ${file.name}. Here's the content:\n\n${fileContent}\n\nCan you analyze this document and provide career guidance based on its content?`;
+        
+        // Wait a moment before sending the analysis request
+        setTimeout(() => {
+          handleSendMessage(analysisPrompt);
+        }, 500);
+      }
+
+      showSuccess(`Successfully uploaded ${files.length} file(s)`);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      showError(`Failed to upload files: ${error.message}`);
+    }
+  };
+
+  // Read file content as text
+  const readFileContent = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const content = e.target.result;
+        
+        // For text files, return as is
+        if (file.type === 'text/plain') {
+          resolve(content);
+          return;
+        }
+        
+        // For other file types, we'll need to extract text
+        // This is a simplified approach - in production, you'd want to use proper libraries
+        if (file.type === 'application/pdf') {
+          // For PDF files, you'd typically use a library like pdf-parse
+          resolve(`PDF content from ${file.name} - Content extraction would require additional libraries`);
+        } else if (file.type.includes('document')) {
+          // For Word documents, you'd use libraries like mammoth or docx-parser
+          resolve(`Document content from ${file.name} - Content extraction would require additional libraries`);
+        } else {
+          resolve(content);
+        }
+      };
+      
+      reader.onerror = (error) => {
+        reject(new Error(`Failed to read file: ${error.message}`));
+      };
+      
+      // Read as text for most file types
+      if (file.type === 'text/plain') {
+        reader.readAsText(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  };
+
+  // Mock conversation data for sidebar
   const mockConversations = [
     {
       id: 1,
@@ -26,15 +166,6 @@ const AICareerGuidanceChat = () => {
           content: "I\'m interested in pursuing cardiology. Can you help me understand the path and requirements?",
           isUser: true,
           timestamp: new Date(Date.now() - 3600000),
-        },
-        {
-          id: 2,
-          content: `Absolutely! Cardiology is an excellent specialty choice. Here's a comprehensive overview of the path:\n\n**Educational Requirements:**\n• Complete medical school (4 years)\n• Internal medicine residency (3 years)\n• Cardiology fellowship (3 years)\n• Optional subspecialty fellowship (1 year)\n\n**Key Certifications:**\n• Board certification in Internal Medicine\n• Board certification in Cardiovascular Disease\n• ACLS and BLS certifications\n\n**Timeline:** Typically 10-11 years after undergraduate degree\n\n**Subspecialties to consider:**\n• Interventional Cardiology\n• Electrophysiology\n• Heart Failure and Transplant\n• Preventive Cardiology\n\nWould you like me to elaborate on any specific aspect of the cardiology career path?`,
-          isUser: false,
-          timestamp: new Date(Date.now() - 3580000),
-          suggestions: [
-            "What's the salary range for cardiologists?","How competitive is cardiology fellowship?","What skills are most important for cardiology?"
-          ]
         }
       ]
     }
@@ -46,9 +177,19 @@ const AICareerGuidanceChat = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, currentStreamingMessage]);
 
   const handleSendMessage = async (content) => {
+    if (!content.trim()) return;
+
+    // Check configuration before sending
+    const status = getOpenAIConfigStatus();
+    if (!status.isConfigured) {
+      showError('OpenAI API is not configured. Please configure your API key first.');
+      setShowConfigStatus(true);
+      return;
+    }
+
     const userMessage = {
       id: Date.now(),
       content,
@@ -58,84 +199,72 @@ const AICareerGuidanceChat = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
+    setCurrentStreamingMessage('');
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(content);
-      setMessages(prev => [...prev, aiResponse]);
+    // Create streaming message placeholder
+    const streamingId = Date.now() + 1;
+    setStreamingMessageId(streamingId);
+
+    try {
+      const systemPrompt = `You are an expert medical career advisor named MedPath AI. You help medical professionals with career guidance, specialization decisions, career transitions, and professional development. 
+
+      Provide comprehensive, accurate, and personalized advice. Include specific steps, timelines, and resources when possible. Structure your responses clearly with headings and bullet points where appropriate.
+
+      For each response, consider:
+      - Current career stage and background
+      - Specific medical specializations and requirements
+      - Certification and education pathways
+      - Market trends and opportunities
+      - Work-life balance considerations
+      - Financial implications
+
+      Be encouraging and supportive while providing realistic expectations.`;
+
+      let fullResponse = '';
+      
+      await getStreamingChatCompletion(
+        content,
+        (chunk) => {
+          fullResponse += chunk;
+          setCurrentStreamingMessage(fullResponse);
+        },
+        (completeResponse) => {
+          // Add complete message to messages array
+          const aiMessage = {
+            id: streamingId,
+            content: completeResponse,
+            isUser: false,
+            timestamp: new Date(),
+            suggestions: generateSuggestions(completeResponse)
+          };
+          
+          setMessages(prev => [...prev, aiMessage]);
+          setCurrentStreamingMessage('');
+          setStreamingMessageId(null);
+          setIsTyping(false);
+          
+          // Update conversation title based on first message
+          if (messages.length === 1) {
+            const title = generateConversationTitle(content);
+            setConversationTitle(title);
+          }
+        },
+        (error) => {
+          console.error('Error in streaming chat completion:', error);
+          showError(`Error in streaming chat completion: ${error.message}`);
+          setIsTyping(false);
+          setCurrentStreamingMessage('');
+          setStreamingMessageId(null);
+        },
+        systemPrompt
+      );
+    } catch (error) {
+      console.error('Error in chat:', error);
+      showError(`Failed to send message: ${error.message}`);
       setIsTyping(false);
-    }, 1500 + Math.random() * 1000);
-  };
-
-  const generateAIResponse = (userMessage) => {
-    const responses = {
-      specialization: `Based on your question about medical specialization, I'd be happy to help you explore different paths!\n\n**Popular Medical Specialties:**\n• **Internal Medicine** - Broad scope, good foundation\n• **Surgery** - High precision, demanding schedule\n• **Pediatrics** - Working with children and families\n• **Psychiatry** - Mental health focus, growing field\n• **Radiology** - Technology-focused, good work-life balance\n\n**Factors to Consider:**\n• Your interests and personality\n• Desired work-life balance\n• Length of training required\n• Salary expectations\n• Patient interaction preferences\n\nTo give you more personalized advice, could you tell me about your interests, strengths, and what aspects of medicine excite you most?`,
-      
-      certification: `Great question about medical certifications! Here's a comprehensive overview:\n\n**Essential Certifications:**\n• **USMLE Steps 1, 2, & 3** - Required for medical licensure\n• **Board Certification** - Specialty-specific (e.g., ABIM, ABFM)\n• **State Medical License** - Required in each practice state\n• **DEA Registration** - For prescribing controlled substances\n\n**Additional Certifications:**\n• **ACLS** (Advanced Cardiac Life Support)\n• **BLS** (Basic Life Support)\n• **PALS** (Pediatric Advanced Life Support)\n• **Specialty Subspecialty Boards**\n\n**Timeline Considerations:**\n• Board eligibility typically after residency completion\n• Most boards require recertification every 6-10 years\n• Continuing Medical Education (CME) requirements\n\nWhich specialty are you considering? I can provide more specific certification requirements.`,
-      
-      transition: `Career transitions in medicine are definitely possible! Here are common transition paths:\n\n**Clinical to Research:**\n• Consider research fellowships\n• Pursue MPH or PhD degrees\n• Start with clinical research in your specialty\n• Network with research institutions\n• Develop grant writing skills\n\n**Clinical to Administration:**\n• MBA or MHA degrees are valuable\n• Start with committee work in your institution\n• Consider healthcare consulting\n• Develop leadership and business skills\n\n**Clinical to Industry:**\n• Pharmaceutical companies value clinical expertise\n• Medical device companies need physician input\n• Healthcare technology sector is growing\n• Consider regulatory affairs or medical affairs roles\n\n**Key Success Factors:**\n• Leverage your clinical experience\n• Network within your target field\n• Consider additional education/training\n• Start with part-time or consulting roles\n\nWhat type of transition are you most interested in exploring?`,
-      
-      salary: `Medical specialty salaries vary significantly. Here's a general overview:\n\n**High-Earning Specialties:**\n• **Orthopedic Surgery**: $550,000 - $750,000+\n• **Neurosurgery**: $600,000 - $800,000+\n• **Interventional Cardiology**: $500,000 - $700,000+\n• **Anesthesiology**: $400,000 - $500,000+\n\n**Mid-Range Specialties:**\n• **Emergency Medicine**: $350,000 - $450,000\n• **Radiology**: $400,000 - $500,000\n• **Internal Medicine**: $250,000 - $350,000\n• **Psychiatry**: $250,000 - $400,000\n\n**Factors Affecting Salary:**\n• Geographic location\n• Practice setting (academic vs. private)\n• Years of experience\n• Subspecialty training\n• Call requirements\n\n**Remember:** Salary shouldn't be the only factor. Consider work-life balance, job satisfaction, and personal interests.\n\nWhich specialties are you comparing? I can provide more specific information.`
-    };
-
-    // Simple keyword matching for demo
-    const lowerMessage = userMessage.toLowerCase();
-    let response = responses.specialization; // default
-
-    if (lowerMessage.includes('certification') || lowerMessage.includes('board') || lowerMessage.includes('license')) {
-      response = responses.certification;
-    } else if (lowerMessage.includes('transition') || lowerMessage.includes('change') || lowerMessage.includes('research')) {
-      response = responses.transition;
-    } else if (lowerMessage.includes('salary') || lowerMessage.includes('money') || lowerMessage.includes('pay')) {
-      response = responses.salary;
+      setCurrentStreamingMessage('');
+      setStreamingMessageId(null);
     }
-
-    return {
-      id: Date.now() + 1,
-      content: response,
-      isUser: false,
-      timestamp: new Date(),
-      suggestions: [
-        "Tell me more about this topic",
-        "What are the next steps?",
-        "How does this compare to other options?"
-      ]
-    };
-  };
-
-  const handleFileUpload = (files) => {
-    const fileMessage = {
-      id: Date.now(),
-      content: `I've uploaded ${files.length} file(s). Please analyze them and provide career guidance based on the content.`,
-      isUser: true,
-      timestamp: new Date(),
-      attachments: files.map(file => ({
-        name: file.name,
-        size: `${(file.size / 1024).toFixed(1)} KB`,
-        type: file.type
-      }))
-    };
-
-    setMessages(prev => [...prev, fileMessage]);
-    setIsTyping(true);
-
-    // Simulate file analysis
-    setTimeout(() => {
-      const analysisResponse = {
-        id: Date.now() + 1,
-        content: `Thank you for uploading your documents! I've analyzed the content and here's my assessment:\n\n**Document Analysis:**\n• Resume/CV structure looks professional\n• Strong clinical experience noted\n• Good educational background\n• Relevant certifications identified\n\n**Career Recommendations:**\n• Your background shows strong potential for subspecialty training\n• Consider fellowship opportunities in your area of interest\n• Your research experience would be valuable for academic positions\n• Leadership roles align well with administrative career paths\n\n**Next Steps:**\n• Update your CV with recent achievements\n• Network with professionals in your target specialty\n• Consider additional certifications for competitive advantage\n\nWould you like me to elaborate on any specific recommendations or discuss particular career paths in more detail?`,
-        isUser: false,
-        timestamp: new Date(),
-        suggestions: [
-          "What fellowships would you recommend?",
-          "How can I strengthen my application?",
-          "What networking strategies work best?"
-        ]
-      };
-
-      setMessages(prev => [...prev, analysisResponse]);
-      setIsTyping(false);
-    }, 2000);
   };
 
   const handleTopicSelect = (topic) => {
@@ -146,15 +275,25 @@ const AICareerGuidanceChat = () => {
   const handleNewChat = () => {
     setMessages([]);
     setConversationTitle('New Career Guidance Chat');
+    setCurrentStreamingMessage('');
+    setStreamingMessageId(null);
+    setIsTyping(false);
+    showSuccess('New chat started');
   };
 
   const handleDeleteConversation = (conversationId) => {
+    showDevNotification('Conversation management');
     console.log('Delete conversation:', conversationId);
   };
 
   const handleExportChat = (format) => {
+    if (messages.length === 0) {
+      showError('No messages to export');
+      return;
+    }
+
     const chatContent = messages.map(msg => 
-      `${msg.isUser ? 'You' : 'AI'}: ${msg.content}`
+      `${msg.isUser ? 'You' : 'MedPath AI'}: ${msg.content}`
     ).join('\n\n');
 
     if (format === 'txt') {
@@ -162,65 +301,125 @@ const AICareerGuidanceChat = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `career-chat-${new Date().toISOString().split('T')[0]}.txt`;
+      a.download = `medpath-chat-${new Date().toISOString().split('T')[0]}.txt`;
       a.click();
       URL.revokeObjectURL(url);
+      showSuccess('Chat exported as text file');
     } else if (format === 'pdf') {
-      console.log('PDF export would be implemented here');
+      showDevNotification('PDF export');
     }
   };
 
   const handleClearChat = () => {
+    if (messages.length === 0) {
+      showError('No messages to clear');
+      return;
+    }
+    
     setMessages([]);
     setConversationTitle('Career Guidance Chat');
+    setCurrentStreamingMessage('');
+    setStreamingMessageId(null);
+    setIsTyping(false);
+    showSuccess('Chat cleared');
   };
 
   const handleCopyMessage = (messageId) => {
-    console.log('Message copied:', messageId);
+    const message = messages.find(msg => msg.id === messageId);
+    if (message) {
+      navigator.clipboard.writeText(message.content);
+      showSuccess('Message copied to clipboard');
+    }
   };
 
-  const handleRegenerateMessage = (messageId) => {
+  const handleRegenerateMessage = async (messageId) => {
     const messageIndex = messages.findIndex(msg => msg.id === messageId);
     if (messageIndex > 0) {
       const previousUserMessage = messages[messageIndex - 1];
       if (previousUserMessage.isUser) {
         setIsTyping(true);
-        setTimeout(() => {
-          const newResponse = generateAIResponse(previousUserMessage.content);
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[messageIndex] = newResponse;
-            return updated;
-          });
+        setCurrentStreamingMessage('');
+        setStreamingMessageId(messageId);
+        
+        try {
+          let fullResponse = '';
+          
+          await getStreamingChatCompletion(
+            previousUserMessage.content,
+            (chunk) => {
+              fullResponse += chunk;
+              setCurrentStreamingMessage(fullResponse);
+            },
+            (completeResponse) => {
+              const updatedMessage = {
+                ...messages[messageIndex],
+                content: completeResponse,
+                suggestions: generateSuggestions(completeResponse)
+              };
+              
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[messageIndex] = updatedMessage;
+                return updated;
+              });
+              
+              setCurrentStreamingMessage('');
+              setStreamingMessageId(null);
+              setIsTyping(false);
+              showSuccess('Response regenerated');
+            }
+          );
+        } catch (error) {
+          showError('Failed to regenerate response');
           setIsTyping(false);
-        }, 1000);
+          setCurrentStreamingMessage('');
+          setStreamingMessageId(null);
+        }
       }
     }
   };
 
   const handleMessageFeedback = (messageId, feedbackType) => {
+    showDevNotification('Message feedback system');
     console.log('Message feedback:', messageId, feedbackType);
   };
 
   const handleStartChat = () => {
-    const welcomeMessage = "Hello! I'm your AI career guidance assistant. I'm here to help you navigate your medical career path. What would you like to discuss today?";
-    handleSendMessage("Hi, I'd like to get some career guidance.");
+    const welcomeMessage = "Hello! I'm MedPath AI, your dedicated medical career advisor. I'm here to help you navigate your medical career path, whether you're a medical student, resident, or practicing physician looking to make a change. What would you like to discuss today?";
+    handleSendMessage("Hi, I'd like to get some career guidance for my medical career.");
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div 
+      className="min-h-screen bg-background"
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageTransition}
+    >
       <Header />
+      
+      {/* Configuration Status Modal */}
+      {showConfigStatus && (
+        <ConfigurationStatus 
+          onClose={() => setShowConfigStatus(false)}
+        />
+      )}
       
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Sidebar */}
-        <ChatSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          onTopicSelect={handleTopicSelect}
-          conversations={mockConversations}
-          onNewChat={handleNewChat}
-          onDeleteConversation={handleDeleteConversation}
-        />
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <ChatSidebar
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+              onTopicSelect={handleTopicSelect}
+              conversations={mockConversations}
+              onNewChat={handleNewChat}
+              onDeleteConversation={handleDeleteConversation}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col">
@@ -229,19 +428,46 @@ const AICareerGuidanceChat = () => {
             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             onExportChat={handleExportChat}
             onClearChat={handleClearChat}
-            isConnected={isConnected}
+            isConnected={isConnected && configStatus?.isConfigured}
             conversationTitle={conversationTitle}
           />
 
+          {/* Configuration Warning */}
+          {configStatus && !configStatus.isConfigured && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-2">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    OpenAI API is not configured. Please configure your API key to use the chat feature.
+                  </p>
+                  <button
+                    onClick={() => setShowConfigStatus(true)}
+                    className="mt-2 text-sm text-yellow-700 underline hover:text-yellow-800"
+                  >
+                    Configure Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto">
-            {messages.length === 0 ? (
+            {messages.length === 0 && !isTyping ? (
               <WelcomeScreen
                 onStartChat={handleStartChat}
                 onSelectTopic={handleTopicSelect}
               />
             ) : (
-              <div className="space-y-0">
+              <motion.div 
+                className="space-y-0"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.id}
@@ -253,12 +479,30 @@ const AICareerGuidanceChat = () => {
                   />
                 ))}
                 
-                {isTyping && (
+                {/* Streaming message */}
+                {isTyping && streamingMessageId && (
+                  <ChatMessage
+                    message={{
+                      id: streamingMessageId,
+                      content: currentStreamingMessage,
+                      isUser: false,
+                      timestamp: new Date()
+                    }}
+                    isUser={false}
+                    isStreaming={true}
+                    onCopy={handleCopyMessage}
+                    onRegenerate={handleRegenerateMessage}
+                    onFeedback={handleMessageFeedback}
+                  />
+                )}
+                
+                {/* Typing indicator */}
+                {isTyping && !streamingMessageId && (
                   <ChatMessage isTyping={true} />
                 )}
                 
                 <div ref={messagesEndRef} />
-              </div>
+              </motion.div>
             )}
           </div>
 
@@ -266,17 +510,22 @@ const AICareerGuidanceChat = () => {
           <ChatInput
             onSendMessage={handleSendMessage}
             onFileUpload={handleFileUpload}
-            disabled={!isConnected}
-            placeholder="Ask about your medical career path..."
+            disabled={!isConnected || isTyping || !configStatus?.isConfigured}
+            placeholder={
+              configStatus?.isConfigured 
+                ? "Ask about your medical career path..." :"Please configure OpenAI API key to start chatting..."
+            }
             suggestions={messages.length > 0 ? [] : [
               "What specialization matches my background?",
               "How do I transition to research?",
-              "What certifications do I need?"
+              "What certifications do I need?",
+              "Help me plan my residency application",
+              "What are the highest-paying medical specialties?"
             ]}
           />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

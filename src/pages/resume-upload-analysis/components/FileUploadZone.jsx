@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useI18n } from '../../../contexts/I18nContext';
 
 const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFile }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const { t } = useI18n();
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -34,12 +36,12 @@ const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFil
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload only PDF or DOCX files');
+      alert(t('file_type_error'));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      alert('File size must be less than 10MB');
+      alert(t('file_size_error'));
       return;
     }
 
@@ -99,18 +101,18 @@ const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFil
             
             <div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Upload Your Resume
+                {t('upload_your_resume')}
               </h3>
               <p className="text-text-secondary mb-4">
-                Drag and drop your resume here, or click to browse
+                {t('drag_drop_resume')}
               </p>
               <p className="text-sm text-text-muted">
-                Supports PDF and DOCX files up to 10MB
+                {t('supports_pdf_docx')}
               </p>
             </div>
             
             <Button variant="primary" iconName="Upload" iconPosition="left">
-              Choose File
+              {t('choose_file')}
             </Button>
           </div>
         ) : (
@@ -123,7 +125,7 @@ const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFil
             
             <div>
               <h3 className="text-lg font-semibold text-success mb-2">
-                File Uploaded Successfully
+                {t('file_uploaded_successfully')}
               </h3>
               <p className="text-text-primary font-medium">{selectedFile.name}</p>
               <p className="text-sm text-text-secondary">
@@ -134,7 +136,7 @@ const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFil
             {isUploading && (
               <div className="w-full max-w-md mx-auto">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-text-primary">Processing...</span>
+                  <span className="text-sm font-medium text-text-primary">{t('processing')}</span>
                   <span className="text-sm text-text-secondary">{uploadProgress}%</span>
                 </div>
                 <div className="w-full bg-secondary-200 rounded-full h-2">
@@ -154,7 +156,7 @@ const FileUploadZone = ({ onFileSelect, uploadProgress, isUploading, selectedFil
                 onClick={triggerFileInput}
                 disabled={isUploading}
               >
-                Replace File
+                {t('replace_file')}
               </Button>
             </div>
           </div>

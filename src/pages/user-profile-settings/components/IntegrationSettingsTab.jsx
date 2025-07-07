@@ -1,579 +1,473 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
+import { showSuccess, showError, showDevNotification } from '../../../utils/notifications';
+import { tabContent, cardHover } from '../../../utils/animations';
 
 const IntegrationSettingsTab = () => {
   const [integrations, setIntegrations] = useState([
     {
       id: 'epic',
-      name: 'Epic EHR',
-      description: 'Connect with Epic Electronic Health Records system',
+      name: 'Epic EMR',
+      description: 'Sync your Epic EMR data for personalized career insights',
       icon: 'Database',
-      status: 'connected',
-      lastSync: '2024-01-15 10:30',
-      features: ['Patient Data', 'Clinical Notes', 'Scheduling'],
-      isActive: true
-    },
-    {
-      id: 'cerner',
-      name: 'Cerner PowerChart',
-      description: 'Integration with Cerner healthcare information system',
-      icon: 'Activity',
-      status: 'disconnected',
-      lastSync: null,
-      features: ['Medical Records', 'Lab Results', 'Medications'],
-      isActive: false
+      connected: true,
+      lastSync: '2024-01-15 14:30:00',
+      status: 'active'
     },
     {
       id: 'linkedin',
-      name: 'LinkedIn Professional',
-      description: 'Sync professional profile and network connections',
-      icon: 'Users',
-      status: 'connected',
-      lastSync: '2024-01-14 16:45',
-      features: ['Profile Sync', 'Network Analysis', 'Job Opportunities'],
-      isActive: true
+      name: 'LinkedIn',
+      description: 'Import your professional network and career history',
+      icon: 'Linkedin',
+      connected: true,
+      lastSync: '2024-01-15 12:00:00',
+      status: 'active'
     },
     {
       id: 'orcid',
       name: 'ORCID',
-      description: 'Connect your research and publication profile',
-      icon: 'BookOpen',
-      status: 'connected',
-      lastSync: '2024-01-13 09:20',
-      features: ['Publications', 'Research Profile', 'Citations'],
-      isActive: true
+      description: 'Connect your research profile and publications',
+      icon: 'Award',
+      connected: false,
+      lastSync: null,
+      status: 'inactive'
     },
     {
       id: 'pubmed',
       name: 'PubMed',
-      description: 'Access medical literature and research papers',
-      icon: 'Search',
-      status: 'available',
+      description: 'Track your research publications and citations',
+      icon: 'BookOpen',
+      connected: false,
       lastSync: null,
-      features: ['Literature Search', 'Research Tracking', 'Citation Management'],
-      isActive: false
+      status: 'inactive'
     },
     {
-      id: 'medscape',
-      name: 'Medscape',
-      description: 'Medical news, education, and professional resources',
-      icon: 'Newspaper',
-      status: 'available',
+      id: 'doximity',
+      name: 'Doximity',
+      description: 'Sync your medical network and professional updates',
+      icon: 'Users',
+      connected: false,
       lastSync: null,
-      features: ['Medical News', 'CME Credits', 'Drug Information'],
-      isActive: false
+      status: 'inactive'
+    },
+    {
+      id: 'google-scholar',
+      name: 'Google Scholar',
+      description: 'Import your academic publications and citations',
+      icon: 'GraduationCap',
+      connected: false,
+      lastSync: null,
+      status: 'inactive'
     }
   ]);
 
-  const [apiKeys, setApiKeys] = useState({
-    openai: '••••••••••••••••••••••••••••••••sk-1234',
-    fhir: '••••••••••••••••••••••••••••••••fhir-5678',
-    custom: ''
+  const [apiSettings, setApiSettings] = useState({
+    openai: {
+      enabled: true,
+      model: 'gpt-4o',
+      temperature: 0.7,
+      maxTokens: 1000
+    },
+    webhooks: {
+      enabled: false,
+      url: '',
+      events: ['profile_update', 'document_upload', 'analysis_complete']
+    }
   });
 
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const handleToggleIntegration = (integrationId) => {
+    setIntegrations(prev => prev.map(integration => {
+      if (integration.id === integrationId) {
+        const newStatus = !integration.connected;
+        if (newStatus) {
+          // Simulate connection success
+          showSuccess(`${integration.name} connected successfully!`);
+          return {
+            ...integration,
+            connected: true,
+            status: 'active',
+            lastSync: new Date().toISOString()
+          };
+        } else {
+          showSuccess(`${integration.name} disconnected successfully!`);
+          return {
+            ...integration,
+            connected: false,
+            status: 'inactive',
+            lastSync: null
+          };
+        }
+      }
+      return integration;
+    }));
+  };
+
+  const handleSyncIntegration = (integrationId) => {
+    setIntegrations(prev => prev.map(integration => {
+      if (integration.id === integrationId && integration.connected) {
+        showSuccess(`${integration.name} synced successfully!`);
+        return {
+          ...integration,
+          lastSync: new Date().toISOString()
+        };
+      }
+      return integration;
+    }));
+  };
+
+  const handleConfigureIntegration = (integrationId) => {
+    showDevNotification(`Configuration for ${integrations.find(i => i.id === integrationId)?.name}`);
+  };
+
+  const handleUpdateApiSettings = () => {
+    showDevNotification('API settings update');
+  };
+
+  const handleTestWebhook = () => {
+    showDevNotification('Webhook testing');
+  };
+
+  const handleSyncAll = () => {
+    const connectedIntegrations = integrations.filter(i => i.connected);
+    if (connectedIntegrations.length === 0) {
+      showError('No connected integrations to sync');
+      return;
+    }
+
+    connectedIntegrations.forEach(integration => {
+      handleSyncIntegration(integration.id);
+    });
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'connected':
-        return 'text-success bg-success-50 border-success-200';
-      case 'disconnected':
-        return 'text-error bg-error-50 border-error-200';
-      case 'syncing':
-        return 'text-warning bg-warning-50 border-warning-200';
-      case 'available':
-        return 'text-secondary bg-secondary-50 border-secondary-200';
+      case 'active':
+        return 'text-green-600';
+      case 'inactive':
+        return 'text-gray-400';
+      case 'error':
+        return 'text-red-600';
       default:
-        return 'text-text-muted bg-secondary-50 border-border';
+        return 'text-gray-400';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'connected':
+      case 'active':
         return 'CheckCircle';
-      case 'disconnected':
-        return 'XCircle';
-      case 'syncing':
-        return 'RefreshCw';
-      case 'available':
-        return 'Plus';
+      case 'inactive':
+        return 'Circle';
+      case 'error':
+        return 'AlertCircle';
       default:
         return 'Circle';
     }
   };
 
-  const handleIntegrationToggle = (integrationId) => {
-    setIntegrations(prev => prev.map(integration => {
-      if (integration.id === integrationId) {
-        const newStatus = integration.status === 'connected' ? 'disconnected' : 'connected';
-        return {
-          ...integration,
-          status: newStatus,
-          isActive: newStatus === 'connected',
-          lastSync: newStatus === 'connected' ? new Date().toISOString().slice(0, 16).replace('T', ' ') : null
-        };
-      }
-      return integration;
-    }));
-  };
-
-  const handleSync = (integrationId) => {
-    setIntegrations(prev => prev.map(integration => {
-      if (integration.id === integrationId) {
-        return {
-          ...integration,
-          status: 'syncing',
-          lastSync: new Date().toISOString().slice(0, 16).replace('T', ' ')
-        };
-      }
-      return integration;
-    }));
-
-    // Simulate sync completion
-    setTimeout(() => {
-      setIntegrations(prev => prev.map(integration => {
-        if (integration.id === integrationId) {
-          return {
-            ...integration,
-            status: 'connected'
-          };
-        }
-        return integration;
-      }));
-    }, 2000);
-  };
-
-  const handleApiKeyUpdate = (key, value) => {
-    setApiKeys(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleConfigureIntegration = (integration) => {
-    setSelectedIntegration(integration);
-    setShowApiKeyModal(true);
-  };
-
   return (
-    <div className="space-y-6">
-      {/* EHR/EMR Integrations */}
-      <div className="bg-surface rounded-medical-card border border-border p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-8 h-8 bg-primary-50 rounded-medical flex items-center justify-center">
-            <Icon name="Database" size={16} color="var(--color-primary)" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">EHR/EMR Systems</h3>
-            <p className="text-sm text-text-secondary">
-              Connect with Electronic Health Record systems for enhanced analysis
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {integrations.filter(integration => ['epic', 'cerner'].includes(integration.id)).map((integration) => (
-            <div
-              key={integration.id}
-              className="border border-border rounded-medical p-4 hover:bg-secondary-50 medical-transition"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-secondary-100 rounded-medical flex items-center justify-center">
-                    <Icon name={integration.icon} size={18} color="var(--color-secondary)" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-text-primary">{integration.name}</h4>
-                    <p className="text-sm text-text-secondary">{integration.description}</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(integration.status)}`}>
-                  <Icon 
-                    name={getStatusIcon(integration.status)} 
-                    size={12} 
-                    className="inline mr-1" 
-                  />
-                  {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
-                </span>
+    <motion.div
+      variants={tabContent}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <div className="space-y-6">
+        {/* Integration Overview */}
+        <div className="bg-surface rounded-medical-card border border-border">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-text-primary">Integration Settings</h2>
+                <p className="text-text-secondary mt-1">
+                  Connect external services to enhance your career insights
+                </p>
               </div>
-
-              <div className="mb-4">
-                <div className="text-xs text-text-muted mb-2">Features:</div>
-                <div className="flex flex-wrap gap-1">
-                  {integration.features.map((feature, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-primary-50 text-primary text-xs rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {integration.lastSync && (
-                <div className="text-xs text-text-muted mb-3">
-                  Last sync: {integration.lastSync}
-                </div>
-              )}
-
-              <div className="flex space-x-2">
-                <Button
-                  variant={integration.status === 'connected' ? 'danger' : 'primary'}
-                  size="sm"
-                  onClick={() => handleIntegrationToggle(integration.id)}
-                >
-                  {integration.status === 'connected' ? 'Disconnect' : 'Connect'}
-                </Button>
-                {integration.status === 'connected' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="RefreshCw"
-                    onClick={() => handleSync(integration.id)}
-                  >
-                    Sync
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="Settings"
-                  onClick={() => handleConfigureIntegration(integration)}
-                >
-                  Configure
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Professional Networks */}
-      <div className="bg-surface rounded-medical-card border border-border p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-8 h-8 bg-accent-50 rounded-medical flex items-center justify-center">
-            <Icon name="Users" size={16} color="var(--color-accent)" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Professional Networks</h3>
-            <p className="text-sm text-text-secondary">
-              Connect with professional platforms for career insights
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {integrations.filter(integration => ['linkedin', 'orcid'].includes(integration.id)).map((integration) => (
-            <div
-              key={integration.id}
-              className="border border-border rounded-medical p-4 hover:bg-secondary-50 medical-transition"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-secondary-100 rounded-medical flex items-center justify-center">
-                    <Icon name={integration.icon} size={18} color="var(--color-secondary)" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-text-primary">{integration.name}</h4>
-                    <p className="text-sm text-text-secondary">{integration.description}</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(integration.status)}`}>
-                  <Icon 
-                    name={getStatusIcon(integration.status)} 
-                    size={12} 
-                    className="inline mr-1" 
-                  />
-                  {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <div className="text-xs text-text-muted mb-2">Features:</div>
-                <div className="flex flex-wrap gap-1">
-                  {integration.features.map((feature, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-accent-50 text-accent text-xs rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {integration.lastSync && (
-                <div className="text-xs text-text-muted mb-3">
-                  Last sync: {integration.lastSync}
-                </div>
-              )}
-
-              <div className="flex space-x-2">
-                <Button
-                  variant={integration.status === 'connected' ? 'danger' : 'primary'}
-                  size="sm"
-                  onClick={() => handleIntegrationToggle(integration.id)}
-                >
-                  {integration.status === 'connected' ? 'Disconnect' : 'Connect'}
-                </Button>
-                {integration.status === 'connected' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="RefreshCw"
-                    onClick={() => handleSync(integration.id)}
-                  >
-                    Sync
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Research & Medical Resources */}
-      <div className="bg-surface rounded-medical-card border border-border p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-8 h-8 bg-success-50 rounded-medical flex items-center justify-center">
-            <Icon name="BookOpen" size={16} color="var(--color-success)" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Research & Medical Resources</h3>
-            <p className="text-sm text-text-secondary">
-              Access medical literature and professional resources
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {integrations.filter(integration => ['pubmed', 'medscape'].includes(integration.id)).map((integration) => (
-            <div
-              key={integration.id}
-              className="border border-border rounded-medical p-4 hover:bg-secondary-50 medical-transition"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-secondary-100 rounded-medical flex items-center justify-center">
-                    <Icon name={integration.icon} size={18} color="var(--color-secondary)" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-text-primary">{integration.name}</h4>
-                    <p className="text-sm text-text-secondary">{integration.description}</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(integration.status)}`}>
-                  <Icon 
-                    name={getStatusIcon(integration.status)} 
-                    size={12} 
-                    className="inline mr-1" 
-                  />
-                  {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <div className="text-xs text-text-muted mb-2">Features:</div>
-                <div className="flex flex-wrap gap-1">
-                  {integration.features.map((feature, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-success-50 text-success text-xs rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleIntegrationToggle(integration.id)}
-                >
-                  Connect
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="ExternalLink"
-                >
-                  Learn More
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* API Configuration */}
-      <div className="bg-surface rounded-medical-card border border-border p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-8 h-8 bg-warning-50 rounded-medical flex items-center justify-center">
-            <Icon name="Key" size={16} color="var(--color-warning)" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">API Configuration</h3>
-            <p className="text-sm text-text-secondary">
-              Manage API keys and external service connections
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
-                OpenAI API Key
-              </label>
-              <div className="flex space-x-2">
-                <Input
-                  type="password"
-                  value={apiKeys.openai}
-                  onChange={(e) => handleApiKeyUpdate('openai', e.target.value)}
-                  placeholder="Enter OpenAI API key"
-                  className="flex-1"
-                />
-                <Button variant="outline" size="sm" iconName="Eye">
-                  Show
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
-                FHIR Client Key
-              </label>
-              <div className="flex space-x-2">
-                <Input
-                  type="password"
-                  value={apiKeys.fhir}
-                  onChange={(e) => handleApiKeyUpdate('fhir', e.target.value)}
-                  placeholder="Enter FHIR client key"
-                  className="flex-1"
-                />
-                <Button variant="outline" size="sm" iconName="Eye">
-                  Show
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
-              Custom Integration Endpoint
-            </label>
-            <Input
-              type="url"
-              value={apiKeys.custom}
-              onChange={(e) => handleApiKeyUpdate('custom', e.target.value)}
-              placeholder="https://your-custom-api.com/endpoint"
-            />
-          </div>
-
-          <div className="bg-warning-50 rounded-medical p-4 border border-warning-200">
-            <div className="flex items-start space-x-2">
-              <Icon name="AlertTriangle" size={16} color="var(--color-warning)" className="mt-0.5" />
-              <div className="text-sm text-warning">
-                <p className="font-medium">Security Notice</p>
-                <p>API keys are encrypted and stored securely. Never share your API keys with unauthorized parties.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline">
-              Test Connections
-            </Button>
-            <Button variant="primary" iconName="Save">
-              Save API Configuration
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Integration Configuration Modal */}
-      {showApiKeyModal && selectedIntegration && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary-900/50 backdrop-blur-sm">
-          <div className="bg-surface rounded-medical-card border border-border p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-text-primary">
-                Configure {selectedIntegration.name}
-              </h3>
               <Button
-                variant="ghost"
-                size="sm"
-                iconName="X"
-                onClick={() => {
-                  setShowApiKeyModal(false);
-                  setSelectedIntegration(null);
-                }}
-              />
+                variant="outline"
+                onClick={handleSyncAll}
+                icon={<Icon name="RefreshCw" size={16} />}
+              >
+                Sync All
+              </Button>
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Connection URL
-                </label>
-                <Input
-                  type="url"
-                  placeholder="https://api.example.com"
-                  defaultValue="https://api.epic.com/fhir"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Client ID
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Enter client ID"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Client Secret
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Enter client secret"
-                />
-              </div>
+          </div>
 
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowApiKeyModal(false);
-                    setSelectedIntegration(null);
-                  }}
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {integrations.map(integration => (
+                <motion.div
+                  key={integration.id}
+                  className="border border-border rounded-medical p-4 hover:bg-secondary-25 transition-colors"
+                  whileHover={cardHover}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setShowApiKeyModal(false);
-                    setSelectedIntegration(null);
-                  }}
-                >
-                  Save Configuration
-                </Button>
-              </div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-medical flex items-center justify-center ${
+                        integration.connected ? 'bg-primary-50' : 'bg-gray-50'
+                      }`}>
+                        <Icon
+                          name={integration.icon}
+                          size={20}
+                          color={integration.connected ? 'var(--color-primary)' : 'var(--color-text-muted)'}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-medium text-text-primary">{integration.name}</h3>
+                          <Icon
+                            name={getStatusIcon(integration.status)}
+                            size={16}
+                            className={getStatusColor(integration.status)}
+                          />
+                        </div>
+                        <p className="text-sm text-text-secondary mt-1">
+                          {integration.description}
+                        </p>
+                        {integration.connected && integration.lastSync && (
+                          <p className="text-xs text-text-muted mt-2">
+                            Last sync: {new Date(integration.lastSync).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant={integration.connected ? "outline" : "primary"}
+                        size="sm"
+                        onClick={() => handleToggleIntegration(integration.id)}
+                      >
+                        {integration.connected ? 'Disconnect' : 'Connect'}
+                      </Button>
+                      {integration.connected && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSyncIntegration(integration.id)}
+                        >
+                          <Icon name="RefreshCw" size={14} />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleConfigureIntegration(integration.id)}
+                    >
+                      <Icon name="Settings" size={14} />
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* API Settings */}
+        <div className="bg-surface rounded-medical-card border border-border">
+          <div className="p-6 border-b border-border">
+            <h3 className="text-lg font-medium text-text-primary flex items-center">
+              <Icon name="Code" size={20} className="mr-2" />
+              API Settings
+            </h3>
+            <p className="text-text-secondary mt-1">
+              Configure API endpoints and AI model settings
+            </p>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* OpenAI Configuration */}
+            <div>
+              <h4 className="font-medium text-text-primary mb-4">OpenAI Configuration</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Model
+                  </label>
+                  <select
+                    value={apiSettings.openai.model}
+                    onChange={(e) => setApiSettings(prev => ({
+                      ...prev,
+                      openai: { ...prev.openai, model: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-border rounded-medical focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Temperature
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    value={apiSettings.openai.temperature}
+                    onChange={(e) => setApiSettings(prev => ({
+                      ...prev,
+                      openai: { ...prev.openai, temperature: parseFloat(e.target.value) }
+                    }))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-text-muted mt-1">
+                    <span>Precise (0)</span>
+                    <span>{apiSettings.openai.temperature}</span>
+                    <span>Creative (2)</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Max Tokens
+                  </label>
+                  <input
+                    type="number"
+                    min="100"
+                    max="4000"
+                    value={apiSettings.openai.maxTokens}
+                    onChange={(e) => setApiSettings(prev => ({
+                      ...prev,
+                      openai: { ...prev.openai, maxTokens: parseInt(e.target.value) }
+                    }))}
+                    className="w-full px-3 py-2 border border-border rounded-medical focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={apiSettings.openai.enabled}
+                      onChange={(e) => setApiSettings(prev => ({
+                        ...prev,
+                        openai: { ...prev.openai, enabled: e.target.checked }
+                      }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <span className="ml-3 text-sm font-medium text-text-primary">
+                      Enable AI Analysis
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Webhooks Configuration */}
+            <div>
+              <h4 className="font-medium text-text-primary mb-4">Webhooks</h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">Enable Webhooks</label>
+                    <p className="text-xs text-text-muted">Receive real-time notifications about account events</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={apiSettings.webhooks.enabled}
+                      onChange={(e) => setApiSettings(prev => ({
+                        ...prev,
+                        webhooks: { ...prev.webhooks, enabled: e.target.checked }
+                      }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                {apiSettings.webhooks.enabled && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">
+                        Webhook URL
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="url"
+                          value={apiSettings.webhooks.url}
+                          onChange={(e) => setApiSettings(prev => ({
+                            ...prev,
+                            webhooks: { ...prev.webhooks, url: e.target.value }
+                          }))}
+                          placeholder="https://your-app.com/webhook"
+                          className="flex-1 px-3 py-2 border border-border rounded-medical focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={handleTestWebhook}
+                        >
+                          Test
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">
+                        Events
+                      </label>
+                      <div className="space-y-2">
+                        {['profile_update', 'document_upload', 'analysis_complete', 'integration_sync'].map(event => (
+                          <label key={event} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={apiSettings.webhooks.events.includes(event)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setApiSettings(prev => ({
+                                    ...prev,
+                                    webhooks: {
+                                      ...prev.webhooks,
+                                      events: [...prev.webhooks.events, event]
+                                    }
+                                  }));
+                                } else {
+                                  setApiSettings(prev => ({
+                                    ...prev,
+                                    webhooks: {
+                                      ...prev.webhooks,
+                                      events: prev.webhooks.events.filter(e => e !== event)
+                                    }
+                                  }));
+                                }
+                              }}
+                              className="rounded border-border text-primary focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-text-primary">
+                              {event.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-4 border-t border-border">
+              <Button
+                variant="primary"
+                onClick={handleUpdateApiSettings}
+              >
+                Save API Settings
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
+import { slideUp, buttonHover } from '../../../utils/animations';
 
 const ChatInput = ({ 
   onSendMessage, 
@@ -11,22 +12,11 @@ const ChatInput = ({
   suggestions = []
 }) => {
   const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const quickSuggestions = [
-    "What specialization matches my background?",
-    "How do I transition to research?",
-    "What certifications do I need?",
-    "Compare salary expectations",
-    "Work-life balance in different specialties",
-    "International medical opportunities"
-  ];
-
-  const displaySuggestions = suggestions.length > 0 ? suggestions : quickSuggestions;
-
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -34,12 +24,23 @@ const ChatInput = ({
     }
   }, [message]);
 
+  // Listen for suggestion events
+  useEffect(() => {
+    const handleSuggestion = (event) => {
+      setMessage(event.detail);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    };
+
+    window.addEventListener('sendSuggestion', handleSuggestion);
+    return () => window.removeEventListener('sendSuggestion', handleSuggestion);
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
       onSendMessage(message.trim());
       setMessage('');
-      setShowSuggestions(false);
+      setIsComposing(false);
     }
   };
 
@@ -55,160 +56,130 @@ const ChatInput = ({
     if (files.length > 0) {
       onFileUpload(files);
     }
+    // Reset file input
     e.target.value = '';
   };
 
   const handleSuggestionClick = (suggestion) => {
     setMessage(suggestion);
-    setShowSuggestions(false);
-    textareaRef.current?.focus();
-  };
-
-  const toggleVoiceRecording = () => {
-    setIsRecording(!isRecording);
-    // Voice recording implementation would go here
+    setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
   return (
-    <div className="border-t border-border bg-surface">
+    <motion.div
+      className="border-t border-border bg-surface"
+      variants={slideUp}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Suggestions */}
-      {showSuggestions && displaySuggestions.length > 0 && (
-        <div className="p-4 border-b border-border">
-          <div className="text-xs font-medium text-text-muted mb-3">
-            Suggested questions:
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {displaySuggestions.slice(0, 6).map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="text-sm px-3 py-2 bg-secondary-50 hover:bg-secondary-100 text-text-secondary hover:text-primary rounded-full transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {suggestions.length > 0 && (
+          <motion.div
+            className="p-4 border-b border-border"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <div className="flex items-center space-x-2 mb-2">
+              <Icon name="Lightbulb" size={14} color="var(--color-text-muted)" />
+              <span className="text-sm text-text-muted">Suggested questions:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((suggestion, index) => (
+                <motion.button
+                  key={index}
+                  className="px-3 py-1.5 text-sm bg-secondary-50 hover:bg-secondary-100 text-text-primary rounded-full border border-border transition-colors"
+                  whileHover={buttonHover}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input Area */}
-      <div className="p-4">
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Main Input */}
-          <div className="relative">
-            <div className="flex items-end space-x-3">
-              {/* File Upload */}
-              <div className="flex-shrink-0">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  iconName="Paperclip"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-text-muted hover:text-primary"
-                  disabled={disabled}
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="p-4">
+        <div className="relative bg-background rounded-medical border border-border">
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              setIsComposing(e.target.value.length > 0);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="w-full resize-none border-0 bg-transparent p-3 pr-20 text-text-primary placeholder-text-muted focus:outline-none focus:ring-0 disabled:opacity-50"
+            rows={1}
+            style={{ minHeight: '44px', maxHeight: '120px' }}
+          />
 
-              {/* Text Input */}
-              <div className="flex-1 relative">
-                <textarea
-                  ref={textareaRef}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setShowSuggestions(true)}
-                  placeholder={placeholder}
-                  disabled={disabled}
-                  className="w-full resize-none border border-border rounded-lg px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                  rows={1}
-                  style={{ minHeight: '44px', maxHeight: '120px' }}
-                />
-                
-                {/* Character Count */}
-                {message.length > 0 && (
-                  <div className="absolute bottom-1 right-12 text-xs text-text-muted">
-                    {message.length}/2000
-                  </div>
-                )}
-              </div>
+          {/* Actions */}
+          <div className="absolute right-2 bottom-2 flex items-center space-x-2">
+            {/* File Upload */}
+            <motion.button
+              type="button"
+              className="p-2 text-text-muted hover:text-text-primary transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled}
+            >
+              <Icon name="Paperclip" size={16} />
+            </motion.button>
 
-              {/* Voice Input */}
-              <div className="flex-shrink-0">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  iconName={isRecording ? "MicOff" : "Mic"}
-                  onClick={toggleVoiceRecording}
-                  className={`${
-                    isRecording 
-                      ? 'text-error bg-error-50 hover:bg-error-100' :'text-text-muted hover:text-primary'
-                  }`}
-                  disabled={disabled}
-                />
-              </div>
-
-              {/* Send Button */}
-              <div className="flex-shrink-0">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  iconName="Send"
-                  disabled={!message.trim() || disabled}
-                  className="px-4"
-                >
-                  Send
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={() => setShowSuggestions(!showSuggestions)}
-                className="flex items-center space-x-2 text-xs text-text-muted hover:text-primary transition-colors"
-              >
-                <Icon name="Lightbulb" size={14} />
-                <span>Suggestions</span>
-              </button>
-              
-              <div className="flex items-center space-x-2 text-xs text-text-muted">
-                <Icon name="Zap" size={14} />
-                <span>AI-powered responses</span>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 text-xs text-text-muted">
-              <Icon name="Shield" size={14} />
-              <span>Secure & Private</span>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {/* Recording Indicator */}
-      {isRecording && (
-        <div className="absolute top-0 left-0 right-0 bg-error-50 border-b border-error-200 px-4 py-2">
-          <div className="flex items-center justify-center space-x-2 text-error">
-            <div className="w-2 h-2 bg-error rounded-full animate-pulse" />
-            <span className="text-sm font-medium">Recording... Tap to stop</span>
+            {/* Send Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={disabled || !message.trim()}
+              className="px-3 py-1.5"
+            >
+              <Icon name="Send" size={14} />
+            </Button>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept=".txt,.pdf,.doc,.docx,.rtf"
+          multiple
+          onChange={handleFileSelect}
+        />
+
+        {/* Status */}
+        <div className="flex items-center justify-between mt-2 text-xs text-text-muted">
+          <div className="flex items-center space-x-4">
+            <span>Press Enter to send, Shift+Enter for new line</span>
+            {isComposing && (
+              <motion.span
+                className="flex items-center space-x-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <Icon name="Edit3" size={12} />
+                <span>Typing...</span>
+              </motion.span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Icon name="Shield" size={12} />
+            <span>Secure & Private</span>
+          </div>
+        </div>
+      </form>
+    </motion.div>
   );
 };
 

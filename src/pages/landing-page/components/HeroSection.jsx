@@ -27,7 +27,7 @@ const HeroSection = () => {
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center space-x-2 bg-primary-100 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Icon name="Sparkles" size={16} />
-              <span>ИИ-платформа карьерной аналитики</span>
+              <span>{t('ai_career_analytics_platform')}</span>
             </div>
             
             <h1 className="text-4xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
@@ -92,8 +92,8 @@ const HeroSection = () => {
                     <Icon name="Activity" size={24} color="white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-text-primary">Панель анализа карьеры</h3>
-                    <p className="text-sm text-text-secondary">ИИ-инсайты</p>
+                    <h3 className="font-semibold text-text-primary">{t('career_analysis_dashboard')}</h3>
+                    <p className="text-sm text-text-secondary">{t('ai_insights')}</p>
                   </div>
                 </div>
                 
@@ -101,7 +101,7 @@ const HeroSection = () => {
                   <div className="bg-success-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <Icon name="TrendingUp" size={16} color="var(--color-success)" />
-                      <span className="text-sm font-medium text-success">Карьерный рост</span>
+                      <span className="text-sm font-medium text-success">{t('career_growth')}</span>
                     </div>
                     <div className="text-2xl font-bold text-success">87%</div>
                   </div>
@@ -109,7 +109,7 @@ const HeroSection = () => {
                   <div className="bg-primary-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <Icon name="Target" size={16} color="var(--color-primary)" />
-                      <span className="text-sm font-medium text-primary">Соответствие навыков</span>
+                      <span className="text-sm font-medium text-primary">{t('skill_match')}</span>
                     </div>
                     <div className="text-2xl font-bold text-primary">92%</div>
                   </div>
@@ -117,7 +117,7 @@ const HeroSection = () => {
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-secondary">Кардиология</span>
+                    <span className="text-sm text-text-secondary">{t('cardiology')}</span>
                     <span className="text-sm font-medium text-text-primary">85%</span>
                   </div>
                   <div className="w-full bg-secondary-100 rounded-full h-2">
@@ -127,7 +127,7 @@ const HeroSection = () => {
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-secondary">Скорая помощь</span>
+                    <span className="text-sm text-text-secondary">{t('emergency_medicine_short')}</span>
                     <span className="text-sm font-medium text-text-primary">78%</span>
                   </div>
                   <div className="w-full bg-secondary-100 rounded-full h-2">

@@ -202,22 +202,22 @@ const Header = () => {
                   <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-border rounded-medical-card medical-shadow-floating z-1050">
                     <div className="py-2">
                       <div className="px-4 py-3 border-b border-border">
-                        <p className="text-sm font-medium text-text-primary">Др. Сара Джонсон</p>
-                        <p className="text-xs text-text-secondary">sara.johnson@medpath.ai</p>
+                        <p className="text-sm font-medium text-text-primary">{t('user_name')}</p>
+                        <p className="text-xs text-text-secondary">{t('user_email')}</p>
                       </div>
                       <button
                         onClick={() => handleUserAction('profile')}
                         className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-text-secondary hover:text-primary hover:bg-secondary-50 medical-transition"
                       >
                         <Icon name="Settings" size={16} />
-                        <span>Настройки профиля</span>
+                        <span>{t('profile_settings')}</span>
                       </button>
                       <button
                         onClick={() => handleUserAction('logout')}
                         className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-error hover:bg-error-50 medical-transition"
                       >
                         <Icon name="LogOut" size={16} />
-                        <span>Выйти</span>
+                        <span>{t('logout')}</span>
                       </button>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ const Header = () => {
               {/* Mobile Language Switcher */}
               <div className="pt-4 border-t border-border">
                 <div className="px-4 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
-                  Язык
+                  {t('language')}
                 </div>
                 <div className="space-y-1">
                   {languages.map((language) => (

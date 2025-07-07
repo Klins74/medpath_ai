@@ -1,51 +1,54 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useI18n } from '../../../contexts/I18nContext';
 
 const WelcomeScreen = ({ onStartChat, onSelectTopic }) => {
+  const { t } = useI18n();
+  
   const welcomeFeatures = [
     {
       icon: 'Brain',
-      title: 'AI-Powered Guidance',
-      description: 'Get personalized career advice based on your medical background and goals'
+      title: t('ai_powered_guidance'),
+      description: t('ai_powered_guidance_desc')
     },
     {
       icon: 'Target',
-      title: 'Specialization Planning',
-      description: 'Explore different medical specialties and find the perfect match for your interests'
+      title: t('specialization_planning'),
+      description: t('specialization_planning_desc')
     },
     {
       icon: 'TrendingUp',
-      title: 'Career Progression',
-      description: 'Plan your professional development with milestone tracking and certification guidance'
+      title: t('career_progression'),
+      description: t('career_progression_desc')
     },
     {
       icon: 'Globe',
-      title: 'Global Opportunities',
-      description: 'Discover international medical career paths and requirements'
+      title: t('global_opportunities'),
+      description: t('global_opportunities_desc')
     }
   ];
 
   const quickStartTopics = [
     {
       icon: 'Stethoscope',
-      title: 'Medical Specialization',
-      question: 'What medical specialization would be best for my background and interests?'
+      title: t('medical_specialization'),
+      question: t('medical_specialization_question')
     },
     {
       icon: 'Award',
-      title: 'Certification Path',
-      question: 'What certifications and qualifications do I need for my desired specialty?'
+      title: t('certification_path'),
+      question: t('certification_path_question')
     },
     {
       icon: 'ArrowRight',
-      title: 'Career Transition',
-      question: 'How can I transition from clinical practice to medical research?'
+      title: t('career_transition'),
+      question: t('career_transition_question')
     },
     {
       icon: 'DollarSign',
-      title: 'Salary Expectations',
-      question: 'What are the salary expectations for different medical specialties?'
+      title: t('salary_expectations'),
+      question: t('salary_expectations_question')
     }
   ];
 
@@ -58,11 +61,10 @@ const WelcomeScreen = ({ onStartChat, onSelectTopic }) => {
             <Icon name="MessageSquare" size={32} color="white" />
           </div>
           <h1 className="text-3xl font-bold text-text-primary">
-            Welcome to AI Career Guidance
+            {t('welcome_ai_career_guidance')}
           </h1>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            Get personalized medical career advice powered by advanced AI. 
-            Ask questions about specializations, certifications, career transitions, and more.
+            {t('welcome_description')}
           </p>
         </div>
 
@@ -87,10 +89,10 @@ const WelcomeScreen = ({ onStartChat, onSelectTopic }) => {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold text-text-primary mb-2">
-              Quick Start Topics
+              {t('quick_start_topics')}
             </h2>
             <p className="text-text-secondary">
-              Click on any topic below to begin your conversation
+              {t('quick_start_topics_desc')}
             </p>
           </div>
 
@@ -136,23 +138,23 @@ const WelcomeScreen = ({ onStartChat, onSelectTopic }) => {
             onClick={onStartChat}
             className="px-8 py-3"
           >
-            Start New Conversation
+            {t('start_new_conversation')}
           </Button>
           
           <div className="flex items-center justify-center space-x-4 text-sm text-text-muted">
             <div className="flex items-center space-x-2">
               <Icon name="Shield" size={16} />
-              <span>Private & Secure</span>
+              <span>{t('private_secure')}</span>
             </div>
             <div className="w-1 h-1 bg-text-muted rounded-full" />
             <div className="flex items-center space-x-2">
               <Icon name="Zap" size={16} />
-              <span>AI-Powered</span>
+              <span>{t('ai_powered')}</span>
             </div>
             <div className="w-1 h-1 bg-text-muted rounded-full" />
             <div className="flex items-center space-x-2">
               <Icon name="Clock" size={16} />
-              <span>24/7 Available</span>
+              <span>{t('available_24_7')}</span>
             </div>
           </div>
         </div>
@@ -163,13 +165,13 @@ const WelcomeScreen = ({ onStartChat, onSelectTopic }) => {
             <Icon name="Info" size={20} className="text-primary flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-medium text-text-primary mb-2">
-                How to get the best results:
+                {t('how_to_get_best_results')}
               </h3>
               <ul className="text-sm text-text-secondary space-y-1">
-                <li>• Be specific about your medical background and experience</li>
-                <li>• Mention your career goals and interests</li>
-                <li>• Ask follow-up questions for detailed guidance</li>
-                <li>• Upload relevant documents for personalized advice</li>
+                <li>{t('be_specific_background')}</li>
+                <li>{t('mention_career_goals')}</li>
+                <li>{t('ask_followup_questions')}</li>
+                <li>{t('upload_relevant_documents')}</li>
               </ul>
             </div>
           </div>
