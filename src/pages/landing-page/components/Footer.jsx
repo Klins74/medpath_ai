@@ -103,18 +103,19 @@ const Footer = () => {
               ))}
             </div>
             
+            {/* Обновленные контактные данные */}
             <div className="space-y-2 text-sm text-secondary-400">
               <div className="flex items-center space-x-2">
                 <Icon name="Mail" size={16} />
-                <span>support@medpath.ai</span>
+                <span>av7004764@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Icon name="Phone" size={16} />
-                <span>+1 (555) 123-4567</span>
+                <span>+7 747 293 0623</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Icon name="MapPin" size={16} />
-                <span>San Francisco, CA</span>
+                <span>Алматы</span>
               </div>
             </div>
           </div>

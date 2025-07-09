@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import TimelineVisualization from './components/TimelineVisualization';
@@ -10,15 +10,23 @@ import ExportControls from './components/ExportControls';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 
+// Исходные данные для таймлайна
+const allMilestones = [
+    { id: 1, title: "Окончание мед. вуза", date: "2020-06-15", status: "completed", type: "education" },
+    { id: 2, title: "Резидентура", date: "2023-06-30", status: "completed", type: "training" },
+    { id: 3, title: "Сертификация", date: "2023-08-15", status: "current", type: "certification" },
+    { id: 4, title: "Ординатура (Кардиология)", date: "2024-07-01", status: "upcoming", type: "specialization" },
+    { id: 5, title: "Должность лечащего врача", date: "2026-07-01", status: "future", type: "career" }
+];
+
 const CareerRoadmapDashboard = () => {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState('timeline');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRecommendationsCollapsed, setIsRecommendationsCollapsed] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
   const [selectedMilestone, setSelectedMilestone] = useState(null);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({ timeframe: 'all', status: 'all' });
 
   const viewOptions = [
     { id: 'timeline', label: 'Timeline View', icon: 'Timeline', description: 'Interactive career timeline' },
@@ -33,36 +41,34 @@ const CareerRoadmapDashboard = () => {
     completionRate: 68
   };
 
-  useEffect(() => {
-    // Simulate data loading
-    const loadDashboardData = async () => {
-      // Mock API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    };
+  // Логика фильтрации
+  const filteredMilestones = useMemo(() => {
+    return allMilestones.filter(milestone => {
+        const today = new Date();
+        const milestoneDate = new Date(milestone.date);
 
-    loadDashboardData();
-  }, []);
+        // Фильтр по статусу
+        const statusMatch = filters.status === 'all' || milestone.status === filters.status;
+
+        // Фильтр по времени
+        let timeMatch = true;
+        if (filters.timeframe !== 'all') {
+            const years = parseInt(filters.timeframe.replace('years', '').replace('year', ''));
+            const futureDate = new Date();
+            futureDate.setFullYear(today.getFullYear() + years);
+            timeMatch = milestoneDate <= futureDate;
+        }
+
+        return statusMatch && timeMatch;
+    });
+  }, [filters]);
 
   const handleMilestoneClick = (milestone) => {
     setSelectedMilestone(milestone);
-    console.log('Milestone clicked:', milestone);
   };
 
-  const handleFilterChange = (newFilters) => {
+  const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);
-    console.log('Filters updated:', newFilters);
-  };
-
-  const handleBookmark = (itemId, isBookmarked) => {
-    console.log('Bookmark toggled:', itemId, isBookmarked);
-  };
-
-  const handleExport = (format, data) => {
-    console.log('Export completed:', format, data);
-  };
-
-  const handleZoomChange = (newZoom) => {
-    setZoomLevel(newZoom);
   };
 
   return (
@@ -72,8 +78,7 @@ const CareerRoadmapDashboard = () => {
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Left Sidebar - Filters */}
         <FilterSidebar
-          filters={filters}
-          onFilterChange={handleFilterChange}
+          onApplyFilters={handleApplyFilters}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
@@ -92,7 +97,7 @@ const CareerRoadmapDashboard = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <ExportControls onExport={handleExport} />
+                <ExportControls onExport={() => {}} />
                 <Button
                   variant="outline"
                   iconName="Settings"
@@ -138,31 +143,12 @@ const CareerRoadmapDashboard = () => {
                           Interactive timeline showing your career milestones and future goals
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          iconName="RotateCcw"
-                          onClick={() => setZoomLevel(1)}
-                        >
-                          Reset View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          iconName="Maximize"
-                          onClick={() => console.log('Fullscreen timeline')}
-                        >
-                          Fullscreen
-                        </Button>
-                      </div>
                     </div>
 
                     <div className="h-[calc(100%-5rem)]">
                       <TimelineVisualization
+                        milestones={filteredMilestones} // Передаем отфильтрованные данные
                         onMilestoneClick={handleMilestoneClick}
-                        zoomLevel={zoomLevel}
-                        onZoomChange={handleZoomChange}
                       />
                     </div>
                   </div>
@@ -176,61 +162,20 @@ const CareerRoadmapDashboard = () => {
               </div>
             )}
           </div>
-
-          {/* Quick Actions Bar */}
-          <div className="bg-surface border-t border-border p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="Upload"
-                  onClick={() => navigate('/resume-upload-analysis')}
-                >
-                  Update Resume
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="MessageSquare"
-                  onClick={() => navigate('/ai-career-guidance-chat')}
-                >
-                  Career Chat
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconName="BookOpen"
-                  onClick={() => console.log('View resources')}
-                >
-                  Resources
-                </Button>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-sm text-text-secondary">
-                <Icon name="Clock" size={14} />
-                <span>Last updated: {new Date().toLocaleTimeString()}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right Sidebar - Recommendations */}
         <RecommendationsPanel
-          onBookmark={handleBookmark}
+          onBookmark={() => {}}
           isCollapsed={isRecommendationsCollapsed}
           onToggleCollapse={() => setIsRecommendationsCollapsed(!isRecommendationsCollapsed)}
         />
       </div>
 
-      {/* Floating Chatbot Widget */}
       <ChatbotWidget
         isOpen={isChatbotOpen}
         onToggle={() => setIsChatbotOpen(!isChatbotOpen)}
       />
-
-      {/* Mobile Responsive Overlay */}
-      <div className="lg:hidden fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-40 pointer-events-none opacity-0" />
     </div>
   );
 };

@@ -102,14 +102,10 @@ const SystemArchitectureSection = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center space-x-2 bg-primary-100 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Icon name="Layers" size={16} />
+          <div className="inline-flex items-center space-x-3 bg-primary-100 text-primary px-6 py-3 rounded-full text-xl lg:text-2xl font-semibold mb-8">
+            <Icon name="Layers" size={24} />
             <span>Системная архитектура</span>
           </div>
-          
-          <h2 className="text-3xl lg:text-5xl font-bold text-text-primary mb-6">
-            {t('architecture_title')}
-          </h2>
           
           <p className="text-lg text-text-secondary max-w-3xl mx-auto">
             Модульная архитектура платформы, обеспечивающая масштабируемость, безопасность и высокую производительность
@@ -169,27 +165,6 @@ const SystemArchitectureSection = () => {
                 )}
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Architecture Diagram */}
-        <div className="mt-16">
-          <div className="bg-surface border border-border rounded-2xl p-8 medical-shadow-card">
-            <h3 className="text-xl font-semibold text-text-primary mb-6 text-center">
-              Схема взаимодействия модулей
-            </h3>
-            <div className="flex flex-wrap justify-center items-center gap-4">
-              {modules.map((module, index) => (
-                <div key={module.id} className="flex items-center">
-                  <div className="bg-primary-50 text-primary px-3 py-2 rounded-lg text-sm font-medium">
-                    {module.title.split(' ')[0]}
-                  </div>
-                  {index < modules.length - 1 && (
-                    <Icon name="ArrowRight" size={16} className="mx-2 text-text-secondary" />
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

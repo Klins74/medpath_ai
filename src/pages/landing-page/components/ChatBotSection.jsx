@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useI18n } from '../../../contexts/I18nContext';
-import { getStreamingChatCompletion } from '../../../services/openaiService';
+// 1. ИСПРАВЛЕНИЕ: Импортируем правильную функцию
+import { getChatCompletion } from '../../../services/openaiService';
 
 const ChatBotSection = () => {
   const { t } = useI18n();
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -17,7 +17,6 @@ const ChatBotSection = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -33,17 +32,15 @@ const ChatBotSection = () => {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    // Прокручиваем вниз только при добавлении нового сообщения
+    if (messages.length > 1) {
+        scrollToBottom();
     }
-  }, [isOpen]);
+  }, [messages.length]);
 
+  // 2. ИСПРАВЛЕНИЕ: Логика адаптирована под getChatCompletion
   const handleSendMessage = async (message = inputValue.trim()) => {
-    if (!message) return;
+    if (!message || isTyping) return;
 
     const userMessage = {
       id: Date.now(),
@@ -56,51 +53,42 @@ const ChatBotSection = () => {
     setInputValue('');
     setIsTyping(true);
 
+    const botMessageId = Date.now() + 1;
+    const placeholderMessage = {
+      id: botMessageId,
+      type: 'bot',
+      content: '...',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, placeholderMessage]);
+
     try {
       const systemPrompt = `Вы - опытный консультант по медицинской карьере с экспертизой в различных медицинских специализациях. 
       Отвечайте на русском языке. Предоставляйте конкретные, практические советы по карьерному развитию в медицине. 
       Будьте дружелюбным, профессиональным и информативным.`;
-
-      // Use streaming for better UX
-      setIsStreaming(true);
-      let botResponse = '';
       
-      const streamingBotMessage = {
-        id: Date.now() + 1,
+      const fullResponse = await getChatCompletion(message, systemPrompt);
+
+      const finalBotMessage = {
+        id: botMessageId,
         type: 'bot',
-        content: '',
+        content: fullResponse,
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, streamingBotMessage]);
-
-      await getStreamingChatCompletion(
-        message,
-        (chunk) => {
-          botResponse += chunk;
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === streamingBotMessage.id 
-                ? { ...msg, content: botResponse }
-                : msg
-            )
-          );
-        },
-        systemPrompt
-      );
+      setMessages(prev => prev.map(msg => msg.id === botMessageId ? finalBotMessage : msg));
 
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage = {
-        id: Date.now() + 1,
+        id: botMessageId,
         type: 'bot',
-        content: 'Извините, произошла ошибка. Попробуйте задать вопрос еще раз.',
+        content: `Произошла ошибка: ${error.message}`,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg => msg.id === botMessageId ? errorMessage : msg));
     } finally {
       setIsTyping(false);
-      setIsStreaming(false);
     }
   };
 
@@ -121,14 +109,10 @@ const ChatBotSection = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center space-x-2 bg-primary-100 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Icon name="MessageSquare" size={16} />
+          <div className="inline-flex items-center space-x-3 bg-primary-100 text-primary px-6 py-3 rounded-full text-xl lg:text-2xl font-semibold mb-8">
+            <Icon name="MessageSquare" size={24} />
             <span>ИИ-Консультант</span>
           </div>
-          
-          <h2 className="text-3xl lg:text-5xl font-bold text-text-primary mb-6">
-            {t('chat_title')}
-          </h2>
           
           <p className="text-lg text-text-secondary max-w-3xl mx-auto">
             {t('chat_description')}
@@ -146,7 +130,7 @@ const ChatBotSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-text-primary">MedPath AI Консультант</h3>
-                  <p className="text-sm text-text-secondary">Powered by OpenAI GPT-4</p>
+                  <p className="text-sm text-text-secondary">Powered by Gemini API</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -201,6 +185,7 @@ const ChatBotSection = () => {
                     key={index}
                     onClick={() => handleExampleClick(question)}
                     className="text-xs px-3 py-2 bg-surface border border-border rounded-full text-text-secondary hover:text-primary hover:border-primary medical-transition"
+                    disabled={isTyping}
                   >
                     {question}
                   </button>
@@ -219,11 +204,11 @@ const ChatBotSection = () => {
                   onKeyPress={handleKeyPress}
                   placeholder={t('chat_placeholder')}
                   className="flex-1 px-4 py-3 border border-border rounded-xl bg-surface text-text-primary placeholder-text-muted focus:border-primary focus:ring-2 focus:ring-primary-100 medical-transition"
-                  disabled={isTyping || isStreaming}
+                  disabled={isTyping}
                 />
                 <Button
                   onClick={() => handleSendMessage()}
-                  disabled={!inputValue.trim() || isTyping || isStreaming}
+                  disabled={!inputValue.trim() || isTyping}
                   variant="primary"
                   iconName="Send"
                   className="px-6 py-3"
@@ -233,44 +218,6 @@ const ChatBotSection = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* FAQ Examples */}
-        <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              question: 'Карьерное планирование',
-              answer: 'Узнайте о построении карьерной траектории',
-              icon: 'Route'
-            },
-            {
-              question: 'Развитие навыков',
-              answer: 'Какие навыки развивать в вашей специализации',
-              icon: 'TrendingUp'
-            },
-            {
-              question: 'Образование',
-              answer: 'Курсы и сертификации для роста',
-              icon: 'BookOpen'
-            },
-            {
-              question: 'Специализации',
-              answer: 'Выбор медицинской специализации',
-              icon: 'Stethoscope'
-            }
-          ].map((item, index) => (
-            <div
-              key={index}
-              className="bg-surface border border-border rounded-xl p-6 medical-shadow-card hover:medical-shadow-floating medical-transition cursor-pointer"
-              onClick={() => handleExampleClick(item.question)}
-            >
-              <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-4">
-                <Icon name={item.icon} size={24} color="var(--color-primary)" />
-              </div>
-              <h3 className="font-semibold text-text-primary mb-2">{item.question}</h3>
-              <p className="text-sm text-text-secondary">{item.answer}</p>
-            </div>
-          ))}
         </div>
       </div>
     </section>

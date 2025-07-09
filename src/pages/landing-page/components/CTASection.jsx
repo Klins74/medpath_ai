@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useI18n } from '../../../contexts/I18nContext';
-import { analyzeResume } from '../../../services/openaiService';
+// ИСПРАВЛЕНИЕ: Убираем импорт analyzeResume
+// import { analyzeResume } from '../../../services/openaiService';
 
 const CTASection = () => {
   const { t } = useI18n();
@@ -54,30 +55,16 @@ const CTASection = () => {
     }
   };
 
-  const handleAnalysis = async () => {
+  // ИСПРАВЛЕНИЕ: Упрощаем функцию, чтобы она просто перенаправляла на другую страницу
+  const handleAnalysis = () => {
     if (!selectedFile || !selectedSpecialization) return;
-
-    setIsUploading(true);
-    try {
-      // Simulate file reading (in real implementation, use FileReader)
-      const fileText = `Sample resume content for ${selectedSpecialization} analysis`;
-      
-      const analysis = await analyzeResume(fileText, selectedSpecialization);
-      
-      // Navigate to results page with analysis data
-      navigate('/resume-upload-analysis', { 
-        state: { 
-          analysis, 
-          file: selectedFile.name,
-          specialization: selectedSpecialization 
-        } 
-      });
-    } catch (error) {
-      console.error('Analysis failed:', error);
-      // Handle error - show notification
-    } finally {
-      setIsUploading(false);
-    }
+    // Просто переходим на страницу анализа, передавая информацию о файле
+    navigate('/resume-upload-analysis', { 
+      state: { 
+        file: selectedFile.name,
+        specialization: selectedSpecialization 
+      } 
+    });
   };
 
   return (
@@ -85,14 +72,10 @@ const CTASection = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center space-x-2 bg-accent-100 text-accent px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Icon name="Upload" size={16} />
+          <div className="inline-flex items-center space-x-3 bg-accent-100 text-accent px-6 py-3 rounded-full text-xl lg:text-2xl font-semibold mb-8">
+            <Icon name="Upload" size={24} />
             <span>Начать анализ</span>
           </div>
-          
-          <h2 className="text-3xl lg:text-5xl font-bold text-text-primary mb-6">
-            {t('cta_title')}
-          </h2>
           
           <p className="text-lg text-text-secondary max-w-3xl mx-auto">
             {t('cta_description')}
@@ -199,14 +182,6 @@ const CTASection = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center space-x-2 text-sm text-text-secondary">
-            <Icon name="Users" size={16} />
-            <span>Более 10,000 медицинских специалистов уже используют MedPath AI</span>
           </div>
         </div>
       </div>

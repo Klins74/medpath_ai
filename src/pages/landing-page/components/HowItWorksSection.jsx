@@ -1,6 +1,8 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 import { useI18n } from '../../../contexts/I18nContext';
+import { motion } from 'framer-motion';
+import { stagger, slideUp } from '../../../utils/animations';
 
 const HowItWorksSection = () => {
   const { t } = useI18n();
@@ -9,131 +11,151 @@ const HowItWorksSection = () => {
     {
       id: 1,
       icon: "Database",
-      title: t('step_1_title'),
-      description: t('step_1_description')
+      title: "Сбор и нормализация данных",
+      description: "Безопасно загрузите резюме в формате PDF или DOCX для комплексного анализа.",
+      colors: {
+        badge: "from-primary-600 to-primary-500",
+        iconBg: "from-primary-100 to-primary-50",
+        iconHover: "group-hover:from-primary-600 group-hover:to-primary-500",
+        icon: "text-primary",
+        titleHover: "group-hover:text-primary-500"
+      }
     },
     {
       id: 2,
       icon: "Brain",
-      title: t('step_2_title'),
-      description: t('step_2_description')
+      title: "Анализ профиля (NLP)",
+      description: "Наши продвинутые NLP-алгоритмы анализируют ваш опыт, навыки и карьерные траектории.",
+      colors: {
+        badge: "from-purple-600 to-purple-500",
+        iconBg: "from-purple-100 to-purple-50",
+        iconHover: "group-hover:from-purple-600 group-hover:to-purple-500",
+        icon: "text-purple-600",
+        titleHover: "group-hover:text-purple-500"
+      }
     },
     {
       id: 3,
       icon: "Zap",
-      title: t('step_3_title'),
-      description: t('step_3_description')
+      title: "Прогноз и план (ML + LLM)",
+      description: "Определяем пробелы в навыках и сильные стороны в медицинских специализациях.",
+      colors: {
+        badge: "from-accent-600 to-accent-500",
+        iconBg: "from-accent-100 to-accent-50",
+        iconHover: "group-hover:from-accent-600 group-hover:to-accent-500",
+        icon: "text-accent",
+        titleHover: "group-hover:text-accent-500"
+      }
     },
     {
       id: 4,
       icon: "GitMerge",
-      title: t('step_4_title'),
-      description: t('step_4_description')
+      title: "Интеграция с EHR/EMR",
+      description: "Интеграция с электронными медицинскими записями через FHIR/HL7 для более точного анализа.",
+      colors: {
+        badge: "from-red-600 to-red-500",
+        iconBg: "from-red-100 to-red-50",
+        iconHover: "group-hover:from-red-600 group-hover:to-red-500",
+        icon: "text-red-600",
+        titleHover: "group-hover:text-red-500"
+      }
     },
     {
       id: 5,
       icon: "BarChart3",
-      title: t('step_5_title'),
-      description: t('step_5_description')
+      title: "Визуализация траектории",
+      description: "Чат с нашим ИИ-консультантом по карьере для персонализированных советов и планов.",
+      colors: {
+        badge: "from-orange-600 to-orange-500",
+        iconBg: "from-orange-100 to-orange-50",
+        iconHover: "group-hover:from-orange-600 group-hover:to-orange-500",
+        icon: "text-orange-600",
+        titleHover: "group-hover:text-orange-500"
+      }
     },
     {
       id: 6,
       icon: "Eye",
-      title: t('step_6_title'),
-      description: t('step_6_description')
+      title: "Мониторинг и обратная связь",
+      description: "Отслеживайте прогресс развития карьеры и получайте обновленные рекомендации.",
+      colors: {
+        badge: "from-sky-600 to-sky-500",
+        iconBg: "from-sky-100 to-sky-50",
+        iconHover: "group-hover:from-sky-600 group-hover:to-sky-500",
+        icon: "text-sky-600",
+        titleHover: "group-hover:text-sky-500"
+      }
     }
   ];
-
-  return (
-    <section className="py-20 lg:py-32 bg-surface">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center space-x-2 bg-accent-100 text-accent px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Icon name="Workflow" size={16} />
-            <span>{t('how_it_works_subtitle')}</span>
-          </div>
-          
-          <h2 className="text-3xl lg:text-5xl font-bold text-text-primary mb-6">
-            {t('how_it_works_title')}
-          </h2>
-          
-          <p className="text-lg text-text-secondary max-w-3xl mx-auto">
-            {t('how_it_works_description')}
-          </p>
-        </div>
-
-        {/* Steps Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-          {steps.map((step, index) => (
-            <div key={step.id} className="relative group">
-              {/* Connection Line (Desktop) */}
-              {index < steps.length - 1 && index % 3 !== 2 && (
-                <div className="hidden lg:block absolute top-12 left-full w-12 h-0.5 bg-gradient-to-r from-primary to-transparent transform translate-x-6 z-10">
-                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary rounded-full"></div>
-                </div>
-              )}
-              
-              <div className="bg-surface border border-border rounded-2xl p-8 medical-shadow-card hover:medical-shadow-floating medical-transition group-hover:border-primary/20">
-                {/* Step Number */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground medical-transition">
-                    <Icon name={step.icon} size={24} />
-                  </div>
-                  <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                    {step.id}
-                  </div>
-                </div>
-                
-                {/* Content */}
-                <h3 className="text-xl font-semibold text-text-primary mb-3 group-hover:text-primary medical-transition">
-                  {step.title}
-                </h3>
-                
-                <p className="text-text-secondary leading-relaxed">
-                  {step.description}
-                </p>
-                
-                {/* Hover Arrow */}
-                <div className="mt-6 opacity-0 group-hover:opacity-100 medical-transition">
-                  <div className="flex items-center text-primary text-sm font-medium">
-                    <span>Подробнее</span>
-                    <Icon name="ArrowRight" size={16} className="ml-2" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <div className="bg-primary-50 rounded-2xl p-8 lg:p-12">
-            <h3 className="text-2xl font-bold text-text-primary mb-4">
-              Готовы трансформировать свою медицинскую карьеру?
-            </h3>
-            <p className="text-text-secondary mb-6 max-w-2xl mx-auto">
-              Присоединяйтесь к тысячам медицинских специалистов, которые уже открыли свой оптимальный карьерный путь с помощью нашего ИИ-анализа.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <div className="flex items-center space-x-2 text-sm text-text-secondary">
-                <Icon name="Shield" size={16} color="var(--color-success)" />
-                <span>HIPAA Совместимо</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-text-secondary">
-                <Icon name="Clock" size={16} color="var(--color-success)" />
-                <span>5-минутный анализ</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-text-secondary">
-                <Icon name="Award" size={16} color="var(--color-success)" />
-                <span>Проверено экспертами</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-export default HowItWorksSection;
+ 
+   return (
+     <section className="py-20 lg:py-32 bg-surface">
+       <div className="max-w-7xl mx-auto px-6 lg:px-8">
+         {/* Section Header */}
+         <div className="text-center mb-16">
+           {/* Измененный заголовок */}
+           <div className="flex justify-center items-center gap-4 mb-6">
+             <Icon name="Workflow" size={40} className="text-primary" />
+             <h2 className="text-3xl lg:text-5xl font-bold text-text-primary">
+               {t('how_it_works_subtitle')}
+             </h2>
+           </div>
+           
+           <p className="text-lg text-text-secondary max-w-3xl mx-auto">
+             {t('how_it_works_description')}
+           </p>
+         </div>
+ 
+         {/* Process Flow Layout */}
+         <div className="relative">
+           <div className="absolute left-1/2 top-0 h-full w-0.5 bg-secondary-200 hidden lg:block" aria-hidden="true"></div>
+ 
+           <motion.div 
+             className="space-y-12 lg:space-y-0"
+             initial="hidden"
+             whileInView="visible"
+             viewport={{ once: true, amount: 0.1 }}
+             variants={stagger}
+           >
+             {steps.map((step, index) => (
+               <motion.div 
+                 key={step.id} 
+                 className="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-center"
+                 variants={slideUp}
+               >
+                 <div className={`mb-6 lg:mb-0 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
+                   <div className="bg-surface border border-border rounded-2xl p-8 medical-shadow-card hover:medical-shadow-floating medical-transition hover:border-border-muted group relative">
+                     <div className={`absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br ${step.colors.badge} text-primary-foreground rounded-full flex items-center justify-center text-xl font-bold medical-shadow-floating`}>
+                       {step.id}
+                     </div>
+                     
+                     <div className="flex items-center gap-4 mb-4 mt-6">
+                       <div className={`w-16 h-16 bg-gradient-to-br ${step.colors.iconBg} rounded-2xl flex items-center justify-center ${step.colors.icon} ${step.colors.iconHover} group-hover:text-primary-foreground medical-transition`}>
+                         <Icon name={step.icon} size={32} />
+                       </div>
+                       <h3 className={`text-xl font-semibold text-text-primary ${step.colors.titleHover} medical-transition`}>
+                         {step.title}
+                       </h3>
+                     </div>
+                     
+                     <p className="text-text-secondary leading-relaxed">
+                       {step.description}
+                     </p>
+                   </div>
+                 </div>
+ 
+                 <div className="hidden lg:block">
+                   <div className={`w-8 h-8 rounded-full bg-secondary-200 border-4 border-surface absolute left-1/2 -translate-x-1/2 flex items-center justify-center`}>
+                     <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
+                   </div>
+                 </div>
+               </motion.div>
+             ))}
+           </motion.div>
+         </div>
+       </div>
+     </section>
+   );
+ };
+ 
+ export default HowItWorksSection;

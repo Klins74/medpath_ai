@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const RecommendationsPanel = ({ 
-  recommendations, 
-  onBookmark, 
-  isCollapsed = false, 
-  onToggleCollapse 
-}) => {
+const RecommendationsPanel = ({ onBookmark, isCollapsed, onToggleCollapse }) => {
   const [activeTab, setActiveTab] = useState('certifications');
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
 
@@ -18,117 +14,50 @@ const RecommendationsPanel = ({
         title: "Advanced Cardiac Life Support (ACLS)",
         provider: "American Heart Association",
         priority: "high",
-        timeToComplete: "2-3 weeks",
+        timeToComplete: "2-3 недели",
         cost: "$350",
-        description: "Essential certification for cardiology specialization",
-        requirements: ["Basic Life Support (BLS)", "Medical License"],
-        nextAvailable: "2024-02-15",
-        isBookmarked: false
+        icon: "Award"
       },
       {
         id: 2,
         title: "Board Certification in Cardiology",
         provider: "American Board of Internal Medicine",
         priority: "critical",
-        timeToComplete: "6 months prep",
+        timeToComplete: "6 мес. подготовки",
         cost: "$2,500",
-        description: "Required for practicing as a cardiologist",
-        requirements: ["Fellowship Completion", "Clinical Experience"],
-        nextAvailable: "2024-10-01",
-        isBookmarked: false
+        icon: "ShieldCheck"
       },
-      {
-        id: 3,
-        title: "Echocardiography Certification",
-        provider: "National Board of Echocardiography",
-        priority: "medium",
-        timeToComplete: "3-4 months",
-        cost: "$1,200",
-        description: "Specialized imaging certification for cardiac diagnostics",
-        requirements: ["Cardiology Training", "Case Log"],
-        nextAvailable: "2024-03-01",
-        isBookmarked: false
-      }
     ],
     skills: [
       {
         id: 4,
-        title: "Interventional Cardiology Procedures",
-        category: "Clinical Skills",
+        title: "Interventional Cardiology",
+        provider: "Fellowship Training",
         priority: "high",
-        timeToComplete: "12-18 months",
-        description: "Advanced catheterization and intervention techniques",
-        resources: ["Fellowship Training", "Simulation Lab", "Mentorship"],
-        proficiencyLevel: "Advanced",
-        isBookmarked: false
+        timeToComplete: "12-18 месяцев",
+        cost: "N/A",
+        icon: "Activity"
       },
       {
         id: 5,
-        title: "Healthcare Leadership & Management",
-        category: "Soft Skills",
+        title: "Healthcare Leadership",
+        provider: "Online Courses / MBA",
         priority: "medium",
-        timeToComplete: "6 months",
-        description: "Essential skills for career advancement in healthcare",
-        resources: ["Online Courses", "MBA Programs", "Leadership Workshops"],
-        proficiencyLevel: "Intermediate",
-        isBookmarked: false
+        timeToComplete: "6 месяцев",
+        cost: "$1,000+",
+        icon: "Users"
       },
-      {
-        id: 6,
-        title: "Medical Research & Publication",
-        category: "Academic Skills",
-        priority: "medium",
-        timeToComplete: "Ongoing",
-        description: "Research methodology and academic writing skills",
-        resources: ["Research Mentorship", "Writing Workshops", "Statistical Training"],
-        proficiencyLevel: "Intermediate",
-        isBookmarked: false
-      }
     ],
-    networking: [
-      {
-        id: 7,
-        title: "American College of Cardiology (ACC)",
-        type: "Professional Association",
-        priority: "high",
-        membershipCost: "$395/year",
-        description: "Premier cardiovascular professional organization",
-        benefits: ["Conferences", "Continuing Education", "Networking", "Research Access"],
-        nextEvent: "ACC Scientific Conference 2024",
-        isBookmarked: false
-      },
-      {
-        id: 8,
-        title: "Local Cardiology Society Meetings",
-        type: "Local Network",
-        priority: "medium",
-        membershipCost: "Free",
-        description: "Regional networking and case discussions",
-        benefits: ["Case Studies", "Local Referrals", "Mentorship"],
-        nextEvent: "Monthly Meeting - Feb 20, 2024",
-        isBookmarked: false
-      },
-      {
-        id: 9,
-        title: "Medical LinkedIn Professional Groups",
-        type: "Online Community",
-        priority: "low",
-        membershipCost: "Free",
-        description: "Digital networking and knowledge sharing",
-        benefits: ["Industry Updates", "Job Opportunities", "Peer Discussions"],
-        nextEvent: "Weekly Discussions",
-        isBookmarked: false
-      }
-    ]
+    // Вкладка "Нетворкинг" удалена отсюда
   };
 
+  // И отсюда
   const tabs = [
-    { id: 'certifications', label: 'Certifications', icon: 'Award', count: mockRecommendations.certifications.length },
-    { id: 'skills', label: 'Skills', icon: 'TrendingUp', count: mockRecommendations.skills.length },
-    { id: 'networking', label: 'Networking', icon: 'Users', count: mockRecommendations.networking.length }
+    { id: 'certifications', label: 'Сертификаты', icon: 'Award', count: mockRecommendations.certifications.length },
+    { id: 'skills', label: 'Навыки', icon: 'TrendingUp', count: mockRecommendations.skills.length },
   ];
 
-  const handleBookmark = (itemId) => {
+  const handleBookmarkClick = (itemId) => {
     const newBookmarked = new Set(bookmarkedItems);
     if (newBookmarked.has(itemId)) {
       newBookmarked.delete(itemId);
@@ -139,26 +68,22 @@ const RecommendationsPanel = ({
     onBookmark?.(itemId, !bookmarkedItems.has(itemId));
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityStyles = (priority) => {
     switch (priority) {
-      case 'critical': return 'text-error bg-error-50 border-error-200';
-      case 'high': return 'text-warning bg-warning-50 border-warning-200';
-      case 'medium': return 'text-primary bg-primary-50 border-primary-200';
-      default: return 'text-secondary-600 bg-secondary-50 border-secondary-200';
+      case 'critical': return 'bg-red-100 text-red-700 border-red-200';
+      case 'high': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'medium': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
   if (isCollapsed) {
     return (
-      <div className="w-16 bg-surface border-l border-border h-full flex flex-col items-center py-4 space-y-4">
-        <button
-          onClick={onToggleCollapse}
-          className="p-3 hover:bg-secondary-50 rounded-medical medical-transition"
-          title="Expand Recommendations"
-        >
-          <Icon name="Lightbulb" size={20} />
+      <div className="bg-surface border-l border-border h-full flex flex-col items-center py-4 w-16 transition-all duration-300">
+        <button onClick={onToggleCollapse} className="p-3 hover:bg-secondary-50 rounded-medical medical-transition" title="Развернуть рекомендации">
+          <Icon name="PanelLeftOpen" size={20} />
         </button>
-        <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+        <div className="mt-4 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
           {Object.values(mockRecommendations).flat().length}
         </div>
       </div>
@@ -166,35 +91,31 @@ const RecommendationsPanel = ({
   }
 
   return (
-    <div className="w-96 bg-surface border-l border-border h-full flex flex-col">
+    <div className="w-96 bg-surface border-l border-border h-full flex flex-col transition-all duration-300">
       {/* Header */}
-      <div className="p-6 border-b border-border">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-text-primary">Recommendations</h2>
-          <button
-            onClick={onToggleCollapse}
-            className="p-2 hover:bg-secondary-50 rounded-medical medical-transition"
-            title="Collapse Recommendations"
-          >
+          <h2 className="text-lg font-semibold text-text-primary">Рекомендации</h2>
+          <button onClick={onToggleCollapse} className="p-2 hover:bg-secondary-50 rounded-medical medical-transition" title="Свернуть рекомендации">
             <Icon name="PanelRightClose" size={16} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-secondary-100 rounded-medical p-1">
+        <div className="flex items-center justify-between bg-secondary-100 rounded-medical p-1 space-x-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-medical text-sm font-medium medical-transition ${
+              className={`flex-grow flex items-center justify-center space-x-2 px-2 py-2 rounded-medical text-sm font-medium medical-transition ${
                 activeTab === tab.id
                   ? 'bg-surface text-primary medical-shadow-card'
                   : 'text-text-secondary hover:text-primary'
               }`}
             >
               <Icon name={tab.icon} size={14} />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="text-xs bg-current text-surface rounded-full w-5 h-5 flex items-center justify-center opacity-60">
+              <span className="truncate">{tab.label}</span>
+              <span className={`text-xs rounded-full w-5 h-5 flex items-center justify-center ${activeTab === tab.id ? 'bg-primary text-white' : 'bg-secondary-200 text-secondary-600'}`}>
                 {tab.count}
               </span>
             </button>
@@ -203,157 +124,74 @@ const RecommendationsPanel = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-4">
-          {mockRecommendations[activeTab]?.map((item) => (
-            <div
-              key={item.id}
-              className="bg-surface border border-border rounded-medical-card p-4 medical-shadow-card hover:medical-shadow-floating medical-transition"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-medium text-text-primary mb-1">{item.title}</h3>
-                  <p className="text-sm text-text-secondary">
-                    {item.provider || item.category || item.type}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
-                    {item.priority}
+      <div className="flex-1 overflow-y-auto p-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3"
+          >
+            {mockRecommendations[activeTab]?.map((item) => (
+              <motion.div
+                key={item.id}
+                className="bg-surface border border-border rounded-lg p-4 medical-shadow-card hover:border-primary hover:shadow-lg transition-all duration-300"
+                whileHover={{ y: -2 }}
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Icon name={item.icon} size={20} className="text-primary"/>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-text-primary text-sm leading-tight">{item.title}</h3>
+                        <p className="text-xs text-text-secondary">{item.provider}</p>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleBookmark(item.id)}
-                    className={`p-1 rounded-medical medical-transition ${
+                  <motion.button
+                    onClick={() => handleBookmarkClick(item.id)}
+                    className={`p-2 rounded-full transition-colors ${
                       bookmarkedItems.has(item.id)
-                        ? 'text-warning bg-warning-50' :'text-text-muted hover:text-warning hover:bg-warning-50'
+                        ? 'bg-yellow-100 text-yellow-500' :'bg-secondary-100 text-secondary-400 hover:bg-yellow-100 hover:text-yellow-500'
                     }`}
+                    whileTap={{ scale: 1.2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Icon name="Bookmark" size={16} />
-                  </button>
+                    <Icon name="Bookmark" size={16} fill={bookmarkedItems.has(item.id) ? 'currentColor' : 'none'} />
+                  </motion.button>
                 </div>
-              </div>
 
-              {/* Description */}
-              <p className="text-sm text-text-secondary mb-3">{item.description}</p>
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mt-4 pt-3 border-t border-border">
+                    <div className="text-text-secondary">Приоритет</div>
+                    <div className={`font-medium text-right px-2 py-0.5 rounded-full inline-block justify-self-end ${getPriorityStyles(item.priority)}`}>{item.priority}</div>
+                    
+                    <div className="text-text-secondary">Время</div>
+                    <div className="font-medium text-right text-text-primary">{item.timeToComplete}</div>
 
-              {/* Details */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-muted">Time to Complete:</span>
-                  <span className="font-medium text-text-primary">{item.timeToComplete}</span>
+                    <div className="text-text-secondary">Стоимость</div>
+                    <div className="font-medium text-right text-text-primary">{item.cost}</div>
                 </div>
-                {item.cost && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted">Cost:</span>
-                    <span className="font-medium text-text-primary">{item.cost}</span>
-                  </div>
-                )}
-                {item.membershipCost && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted">Membership:</span>
-                    <span className="font-medium text-text-primary">{item.membershipCost}</span>
-                  </div>
-                )}
-                {item.nextAvailable && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted">Next Available:</span>
-                    <span className="font-medium text-text-primary">
-                      {new Date(item.nextAvailable).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                {item.nextEvent && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted">Next Event:</span>
-                    <span className="font-medium text-text-primary">{item.nextEvent}</span>
-                  </div>
-                )}
-              </div>
 
-              {/* Requirements/Resources/Benefits */}
-              {item.requirements && (
-                <div className="mb-4">
-                  <h4 className="text-xs font-medium text-text-primary mb-2">Requirements:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {item.requirements.map((req, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-secondary-100 text-secondary-600 rounded-medical text-xs"
-                      >
-                        {req}
-                      </span>
-                    ))}
-                  </div>
+                {/* Actions */}
+                <div className="mt-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        fullWidth
+                        iconName="ArrowRight"
+                        iconPosition="right"
+                    >
+                        Подробнее
+                    </Button>
                 </div>
-              )}
-
-              {item.resources && (
-                <div className="mb-4">
-                  <h4 className="text-xs font-medium text-text-primary mb-2">Resources:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {item.resources.map((resource, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-accent-100 text-accent-600 rounded-medical text-xs"
-                      >
-                        {resource}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {item.benefits && (
-                <div className="mb-4">
-                  <h4 className="text-xs font-medium text-text-primary mb-2">Benefits:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {item.benefits.map((benefit, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-success-100 text-success-600 rounded-medical text-xs"
-                      >
-                        {benefit}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex space-x-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  iconName="ExternalLink"
-                  iconPosition="right"
-                  className="flex-1"
-                >
-                  Learn More
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  iconName="Calendar"
-                >
-                  Schedule
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="p-6 border-t border-border">
-        <Button
-          variant="ghost"
-          fullWidth
-          iconName="BookOpen"
-          onClick={() => console.log('View all recommendations')}
-        >
-          View All Recommendations
-        </Button>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

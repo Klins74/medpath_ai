@@ -22,7 +22,7 @@ const LandingPage = () => {
         <DataFlowSection />
         <TechnologyStackSection />
         <CTASection />
-        <ChatBotSection />
+        <ChatBotSection /> 
         <FAQSection />
       </main>
       

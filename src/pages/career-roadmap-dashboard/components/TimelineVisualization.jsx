@@ -1,295 +1,138 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import React from 'react';
 import Icon from '../../../components/AppIcon';
+import { motion } from 'framer-motion';
 
-const TimelineVisualization = ({ 
-  milestones, 
-  currentPosition, 
-  onMilestoneClick, 
-  zoomLevel = 1,
-  onZoomChange 
-}) => {
-  const svgRef = useRef();
-  const [selectedMilestone, setSelectedMilestone] = useState(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
-
+const TimelineVisualization = ({ onMilestoneClick }) => {
   const timelineData = [
     {
       id: 1,
-      title: "Medical School Graduate",
-      date: "2020-06-15",
+      title: "Окончание мед. вуза",
+      date: "Июнь 2020",
       status: "completed",
       type: "education",
-      description: "Completed MD degree with specialization in Internal Medicine",
-      requirements: ["USMLE Step 1", "USMLE Step 2", "Clinical Rotations"],
-      position: { x: 100, y: 200 }
+      description: "Получена степень MD по специальности 'Внутренние болезни'.",
+      icon: "GraduationCap"
     },
     {
       id: 2,
-      title: "Residency Program",
-      date: "2020-07-01",
+      title: "Резидентура",
+      date: "Июль 2020 - Июнь 2023",
       status: "completed",
       type: "training",
-      description: "Internal Medicine Residency at Johns Hopkins Hospital",
-      requirements: ["Match Program", "Board Certification", "Research Publications"],
-      position: { x: 250, y: 200 }
+      description: "Резидентура по внутренним болезням в госпитале Johns Hopkins.",
+      icon: "Stethoscope"
     },
     {
       id: 3,
-      title: "Board Certification",
-      date: "2023-08-15",
+      title: "Сертификация",
+      date: "Август 2023",
       status: "current",
       type: "certification",
-      description: "American Board of Internal Medicine Certification",
-      requirements: ["Residency Completion", "Board Exam", "Continuing Education"],
-      position: { x: 400, y: 200 }
+      description: "Процесс получения сертификации Американского совета по внутренним болезням.",
+      icon: "Award"
     },
     {
       id: 4,
-      title: "Fellowship Training",
-      date: "2024-07-01",
+      title: "Ординатура (Кардиология)",
+      date: "Июль 2024 (План)",
       status: "upcoming",
       type: "specialization",
-      description: "Cardiology Fellowship at Mayo Clinic",
-      requirements: ["Board Certification", "Research Experience", "Letters of Recommendation"],
-      position: { x: 550, y: 200 }
+      description: "Планируется поступление в ординатуру по кардиологии в клинике Mayo.",
+      icon: "HeartPulse"
     },
     {
       id: 5,
-      title: "Attending Physician",
-      date: "2026-07-01",
+      title: "Должность лечащего врача",
+      date: "Июль 2026 (Цель)",
       status: "future",
       type: "career",
-      description: "Senior Cardiologist Position at Academic Medical Center",
-      requirements: ["Fellowship Completion", "Board Certification", "Clinical Experience"],
-      position: { x: 700, y: 200 }
+      description: "Цель - получить должность старшего кардиолога в крупном академическом медицинском центре.",
+      icon: "Briefcase"
     }
   ];
 
-  useEffect(() => {
-    const handleResize = () => {
-      const container = svgRef.current?.parentElement;
-      if (container) {
-        setDimensions({
-          width: container.offsetWidth,
-          height: 400
-        });
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (!svgRef.current) return;
-
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
-    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
-    const width = dimensions.width - margin.left - margin.right;
-    const height = dimensions.height - margin.top - margin.bottom;
-
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // Create scales
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(timelineData, d => new Date(d.date)))
-      .range([0, width]);
-
-    // Draw timeline line
-    g.append("line")
-      .attr("x1", 0)
-      .attr("y1", height / 2)
-      .attr("x2", width)
-      .attr("y2", height / 2)
-      .attr("stroke", "var(--color-border)")
-      .attr("stroke-width", 2);
-
-    // Create milestone groups
-    const milestoneGroups = g.selectAll(".milestone")
-      .data(timelineData)
-      .enter()
-      .append("g")
-      .attr("class", "milestone")
-      .attr("transform", d => `translate(${xScale(new Date(d.date))}, ${height / 2})`)
-      .style("cursor", "pointer");
-
-    // Add milestone circles
-    milestoneGroups.append("circle")
-      .attr("r", 12)
-      .attr("fill", d => {
-        switch (d.status) {
-          case "completed": return "var(--color-success)";
-          case "current": return "var(--color-primary)";
-          case "upcoming": return "var(--color-warning)";
-          default: return "var(--color-secondary-300)";
-        }
-      })
-      .attr("stroke", "white")
-      .attr("stroke-width", 3)
-      .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.1))");
-
-    // Add milestone icons
-    milestoneGroups.append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .attr("fill", "white")
-      .attr("font-size", "12px")
-      .text(d => {
-        switch (d.type) {
-          case "education": return "🎓";
-          case "training": return "🏥";
-          case "certification": return "📜";
-          case "specialization": return "🔬";
-          case "career": return "👨‍⚕️";
-          default: return "•";
-        }
-      });
-
-    // Add milestone labels
-    milestoneGroups.append("text")
-      .attr("text-anchor", "middle")
-      .attr("y", -25)
-      .attr("fill", "var(--color-text-primary)")
-      .attr("font-size", "12px")
-      .attr("font-weight", "600")
-      .text(d => d.title);
-
-    // Add dates
-    milestoneGroups.append("text")
-      .attr("text-anchor", "middle")
-      .attr("y", 35)
-      .attr("fill", "var(--color-text-secondary)")
-      .attr("font-size", "10px")
-      .text(d => new Date(d.date).getFullYear());
-
-    // Add click handlers
-    milestoneGroups.on("click", function(event, d) {
-      setSelectedMilestone(d);
-      onMilestoneClick?.(d);
-    });
-
-    // Add hover effects
-    milestoneGroups.on("mouseenter", function(event, d) {
-      d3.select(this).select("circle")
-        .transition()
-        .duration(200)
-        .attr("r", 15);
-    }).on("mouseleave", function(event, d) {
-      d3.select(this).select("circle")
-        .transition()
-        .duration(200)
-        .attr("r", 12);
-    });
-
-  }, [dimensions, zoomLevel, onMilestoneClick]);
-
-  const handleZoomIn = () => {
-    const newZoom = Math.min(zoomLevel * 1.2, 3);
-    onZoomChange?.(newZoom);
-  };
-
-  const handleZoomOut = () => {
-    const newZoom = Math.max(zoomLevel / 1.2, 0.5);
-    onZoomChange?.(newZoom);
-  };
-
-  const handleResetZoom = () => {
-    onZoomChange?.(1);
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'completed':
+        return {
+          ring: 'ring-success',
+          bg: 'bg-success',
+          text: 'text-success',
+          iconBg: 'bg-success/10'
+        };
+      case 'current':
+        return {
+          ring: 'ring-primary',
+          bg: 'bg-primary',
+          text: 'text-primary',
+          iconBg: 'bg-primary/10'
+        };
+      case 'upcoming':
+        return {
+          ring: 'ring-warning',
+          bg: 'bg-warning',
+          text: 'text-warning',
+          iconBg: 'bg-warning/10'
+        };
+      default: // future
+        return {
+          ring: 'ring-secondary-300',
+          bg: 'bg-secondary-300',
+          text: 'text-secondary-500',
+          iconBg: 'bg-secondary-100'
+        };
+    }
   };
 
   return (
-    <div className="relative w-full h-full bg-surface rounded-medical-card border border-border">
-      {/* Timeline Controls */}
-      <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
-        <button
-          onClick={handleZoomOut}
-          className="p-2 bg-surface border border-border rounded-medical hover:bg-secondary-50 medical-transition"
-          title="Zoom Out"
-        >
-          <Icon name="ZoomOut" size={16} />
-        </button>
-        <button
-          onClick={handleResetZoom}
-          className="px-3 py-2 bg-surface border border-border rounded-medical hover:bg-secondary-50 medical-transition text-xs font-medium"
-          title="Reset Zoom"
-        >
-          {Math.round(zoomLevel * 100)}%
-        </button>
-        <button
-          onClick={handleZoomIn}
-          className="p-2 bg-surface border border-border rounded-medical hover:bg-secondary-50 medical-transition"
-          title="Zoom In"
-        >
-          <Icon name="ZoomIn" size={16} />
-        </button>
+    <div className="w-full h-full overflow-y-auto p-4">
+      <div className="relative pl-8">
+        {/* Vertical line */}
+        <div className="absolute left-8 top-0 h-full w-0.5 bg-border" aria-hidden="true"></div>
+
+        <ul className="space-y-8">
+          {timelineData.map((item, index) => {
+            const styles = getStatusStyles(item.status);
+            return (
+              <motion.li 
+                key={item.id}
+                className="relative"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                {/* Dot on the line */}
+                <div className="absolute -left-10 top-1.5">
+                  <div className={`h-4 w-4 rounded-full ${styles.bg} ring-4 ${styles.ring} ring-opacity-30`}></div>
+                </div>
+
+                <div 
+                  className="p-4 bg-surface rounded-lg border border-border hover:border-primary hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  onClick={() => onMilestoneClick(item)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                       <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center ${styles.iconBg}`}>
+                          <Icon name={item.icon} className={styles.text} size={24} />
+                       </div>
+                       <div>
+                          <h4 className="font-semibold text-text-primary">{item.title}</h4>
+                          <p className={`text-sm font-medium ${styles.text}`}>{item.date}</p>
+                       </div>
+                    </div>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${styles.bg}/10 ${styles.text}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-text-secondary pl-16">
+                    {item.description}
+                  </p>
+                </div>
+              </motion.li>
+            );
+          })}
+        </ul>
       </div>
-
-      {/* Timeline SVG */}
-      <svg
-        ref={svgRef}
-        width="100%"
-        height="100%"
-        className="overflow-visible"
-        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center' }}
-      />
-
-      {/* Milestone Detail Popup */}
-      {selectedMilestone && (
-        <div className="absolute top-16 left-4 right-4 bg-surface border border-border rounded-medical-card medical-shadow-floating p-6 z-20">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-text-primary">
-                {selectedMilestone.title}
-              </h3>
-              <p className="text-sm text-text-secondary">
-                {new Date(selectedMilestone.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedMilestone(null)}
-              className="p-1 hover:bg-secondary-100 rounded-medical medical-transition"
-            >
-              <Icon name="X" size={16} />
-            </button>
-          </div>
-
-          <p className="text-sm text-text-secondary mb-4">
-            {selectedMilestone.description}
-          </p>
-
-          <div>
-            <h4 className="text-sm font-medium text-text-primary mb-2">Requirements:</h4>
-            <ul className="space-y-1">
-              {selectedMilestone.requirements.map((req, index) => (
-                <li key={index} className="flex items-center space-x-2 text-sm text-text-secondary">
-                  <Icon name="CheckCircle" size={14} className="text-success" />
-                  <span>{req}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-              selectedMilestone.status === 'completed' 
-                ? 'bg-success-100 text-success-600'
-                : selectedMilestone.status === 'current' ?'bg-primary-100 text-primary-600'
-                : selectedMilestone.status === 'upcoming' ?'bg-warning-100 text-warning-600' :'bg-secondary-100 text-secondary-600'
-            }`}>
-              {selectedMilestone.status.charAt(0).toUpperCase() + selectedMilestone.status.slice(1)}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
