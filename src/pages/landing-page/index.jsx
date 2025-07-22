@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '../../components/ui/Header';
 import HeroSection from './components/HeroSection';
+import AboutProjectSection from './components/AboutProjectSection'; // 1. ДОБАВЬТЕ ЭТОТ ИМПОРТ
 import HowItWorksSection from './components/HowItWorksSection';
 import SystemArchitectureSection from './components/SystemArchitectureSection';
 import DataFlowSection from './components/DataFlowSection';
@@ -17,6 +18,7 @@ const LandingPage = () => {
       
       <main>
         <HeroSection />
+        <AboutProjectSection /> {/* 2. ДОБАВЬТЕ ЭТУ СТРОКУ */}
         <HowItWorksSection />
         <SystemArchitectureSection />
         <DataFlowSection />
