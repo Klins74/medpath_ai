@@ -13,28 +13,28 @@ const PersonalInfoTab = () => {
   const { t } = useI18n();
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm({
     defaultValues: {
-      firstName: 'Dr. Sarah',
-      lastName: 'Johnson',
-      email: 'sarah.johnson@example.com',
-      phone: '+1 (555) 123-4567',
+      firstName: 'Dr.Aigerim',
+      lastName: 'Mukan',
+      email: 'dr.aigerim.mukan@example.com',
+      phone: '+7 747 293 06 23',
       dateOfBirth: '1990-05-15',
       gender: 'female',
       address: '123 Medical Center Dr',
-      city: 'New York',
-      state: 'NY',
+      city: 'Almaty',
+      state: 'Almaty',
       zipCode: '10001',
-      country: 'United States',
+      country: 'Kazakhstan',
       medicalLicenseNumber: 'NY123456789',
       licenseState: 'NY',
       licenseExpiry: '2025-12-31',
       deaNumber: 'BJ1234567',
       npiNumber: '1234567890',
-      hospitalAffiliation: 'New York Presbyterian Hospital',
+      hospitalAffiliation: 'Almaty Medical University',
       department: 'Internal Medicine',
       yearsOfExperience: '8',
       currentPosition: 'Attending Physician',
       bio: 'Experienced internal medicine physician with a passion for patient care and medical education.',
-      linkedinUrl: 'https://linkedin.com/in/sarah-johnson-md',
+      linkedinUrl: 'https://linkedin.com/in/dr-aigerim-mukan',
       orcidId: '0000-0000-0000-0000'
     }
   });
